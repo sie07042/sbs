@@ -115,7 +115,7 @@
 /* 로그인/회원가입 버튼 기본 스타일 */
 .auth-link {
   /* 거의 불투명한 흰색 텍스트 */
-  color: rgba(26, 13, 102, 0.9);
+  color: rgba(157, 201, 255, 0.9);
   /* 링크 밑줄 제거 */
   text-decoration: none;
   /* 네비게이션 링크보다 약간 작은 폰트 */
@@ -179,7 +179,7 @@
 /* 로그아웃 버튼 기본 스타일 */
 .logout-button {
   /* 흰색에 80% 불투명도의 텍스트 */
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.3);
   /* 링크 밑줄 제거 */
   text-decoration: none;
   /* 폰트 크기 */
@@ -195,7 +195,7 @@
   /* 모든 속성 변화를 0.3초 동안 부드럽게 전환 */
   transition: all 0.3s ease;
   /* 투명한 배경 */
-  background: transparent;
+  /* background: transparent; */
   /* 마우스 커서를 포인터로 변경 */
   cursor: pointer;
 }

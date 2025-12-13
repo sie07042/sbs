@@ -1,0 +1,158 @@
+/**
+ * OAuthCallback.css
+ *
+ * 소셜 로그인(카카오) 콜백 페이지 스타일
+ *
+ * 구성:
+ * 1. 컨테이너 레이아웃 (중앙 정렬)
+ * 2. 카드 스타일
+ * 3. 로딩 스피너 애니메이션
+ * 4. 에러 아이콘 스타일
+ * 5. 텍스트 스타일
+ */
+
+/* 컨테이너: 화면 전체를 채우고 중앙 정렬 */
+.oauth-callback-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* 카드: 콘텐츠를 담는 중앙 카드 */
+.oauth-callback-card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 3rem;
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+/* 제목 스타일 */
+.oauth-callback-card h2 {
+  color: #ffffff;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+/* 일반 텍스트 스타일 */
+.oauth-callback-card p {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1rem;
+  line-height: 1.6;
+  margin-bottom: 0.5rem;
+}
+
+/* 리다이렉트 메시지 스타일 */
+.redirect-message {
+  margin-top: 1.5rem;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-style: italic;
+}
+
+/* 로딩 스피너 */
+.spinner {
+  width: 50px;
+  height: 50px;
+  margin: 0 auto 2rem;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top: 4px solid #ffffff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* 스피너 회전 애니메이션 */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* 에러 아이콘 스타일 */
+.error-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  animation: shake 0.5s ease-in-out;
+}
+
+/* 에러 아이콘 흔들림 애니메이션 */
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-10px);
+  }
+  75% {
+    transform: translateX(10px);
+  }
+}
+
+/* 반응형 디자인: 작은 화면 (모바일) */
+@media (max-width: 480px) {
+  .oauth-callback-container {
+    padding: 1rem;
+  }
+
+  .oauth-callback-card {
+    padding: 2rem 1.5rem;
+  }
+
+  .oauth-callback-card h2 {
+    font-size: 1.25rem;
+  }
+
+  .oauth-callback-card p {
+    font-size: 0.9rem;
+  }
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    margin-bottom: 1.5rem;
+  }
+
+  .error-icon {
+    font-size: 3rem;
+  }
+}
+
+/* 라이트 모드 대응 (prefers-color-scheme 사용) */
+@media (prefers-color-scheme: light) {
+  .oauth-callback-container {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+
+  .oauth-callback-card {
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+  }
+
+  .oauth-callback-card h2 {
+    color: #333333;
+  }
+
+  .oauth-callback-card p {
+    color: #666666;
+  }
+
+  .redirect-message {
+    color: #999999;
+  }
+
+  .spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-top: 4px solid #667eea;
+  }
+}

@@ -3,6 +3,7 @@ import './App.css'
 import Home from './pages/Home'
 import Signup from './pages/Signup'
 import Login from './pages/Login'
+import OAuthCallback from './pages/OAuthCallback'
 import { AuthProvider } from './contexts/AuthProvider'
 
 function App() {
@@ -16,6 +17,8 @@ function App() {
             <Route path='/' element={<Home />}/>
             <Route path='/login' element={<Login />}/>
             <Route path='/signup' element={<Signup />}/>
+            {/* 소셜 로그인(카카오) 콜백 라우트 */}
+            <Route path='/oauth/callback' element={<OAuthCallback />}/>
           </Routes>
         </BrowserRouter>
       </AuthProvider>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import axios from 'axios';
 import AuthContext from './AuthContext';
 
 /**
@@ -22,33 +23,71 @@ export function AuthProvider({ children }) {
   const [isLoading, setIsLoading] = useState(true);
 
   /**
-   * useEffect: 컴포넌트 마운트 시 localStorage에서 저장된 인증 정보 복원
+   * useEffect: 컴포넌트 마운트 시 /refresh API를 호출하여 인증 정보 복원
    *
    * 브라우저를 새로고침해도 로그인 상태가 유지되도록
-   * localStorage에 저장된 사용자 정보와 토큰을 불러옵니다.
+   * HTTP-only 쿠키에 저장된 refreshToken을 사용하여
+   * 서버로부터 새로운 accessToken을 발급받습니다.
+   *
+   * 처리 과정:
+   * 1. localStorage에 사용자 정보가 있는지 확인 (로그인 이력 확인)
+   * 2. 사용자 정보가 있으면 /api/refresh API 호출 (withCredentials: true로 쿠키 포함)
+   * 3. 서버가 refreshToken 쿠키를 확인하고 유효하면 새 accessToken 발급
+   * 4. 성공 시 사용자 정보와 accessToken을 상태에 저장
+   * 5. 실패 시 (refreshToken 만료) localStorage 정리하고 로그아웃 상태 유지
+   * 6. localStorage에 사용자 정보가 없으면 API 호출 없이 로그아웃 상태 유지
    */
   useEffect(() => {
-    // localStorage에서 저장된 사용자 정보 가져오기
-    const savedUser = localStorage.getItem('user');
-    // localStorage에서 저장된 accessToken 가져오기
-    const savedToken = localStorage.getItem('accessToken');
+    // async 함수를 정의하여 API 호출
+    const checkAuth = async () => {
+      // localStorage에서 저장된 사용자 정보 확인
+      const savedUser = localStorage.getItem('user');
 
-    // 저장된 정보가 있으면 상태에 복원
-    if (savedUser && savedToken) {
-      try {
-        // JSON 문자열을 객체로 파싱
-        setUser(JSON.parse(savedUser));
-        setAccessToken(savedToken);
-      } catch (error) {
-        // 파싱 에러 발생 시 localStorage 정리
-        console.error('localStorage 데이터 파싱 에러:', error);
-        localStorage.removeItem('user');
-        localStorage.removeItem('accessToken');
+      // 사용자 정보가 없으면 로그인 이력이 없는 것이므로 API 호출 불필요
+      if (!savedUser) {
+        console.log('로그인 이력 없음 - /refresh API 호출 생략');
+        setIsLoading(false);
+        return;
       }
-    }
 
-    // 로딩 완료
-    setIsLoading(false);
+      // 사용자 정보가 있으면 /refresh API 호출하여 토큰 갱신 시도
+      try {
+        // /api/refresh 엔드포인트 호출
+        // withCredentials: true로 HTTP-only 쿠키(refreshToken) 포함
+        const response = await axios.post('/api/refresh', {}, {
+          withCredentials: true
+        });
+
+        // 서버 응답 확인
+        if (response.data.success) {
+          // 토큰 갱신 성공: 사용자 정보와 새 accessToken 저장
+          // response.data.data 구조: { accessToken, user: { id, email, name, role } }
+          setUser(response.data.data.user);
+          setAccessToken(response.data.data.accessToken);
+
+          // localStorage에는 사용자 정보만 저장 (UX 개선용, accessToken은 저장하지 않음)
+          // 이렇게 하면 페이지 로딩 시 사용자 이름을 바로 표시할 수 있습니다
+          localStorage.setItem('user', JSON.stringify(response.data.data.user));
+          console.log('토큰 갱신 성공');
+        } else {
+          // 토큰 갱신 실패: 로그아웃 상태 유지
+          console.log('토큰 갱신 실패:', response.data.message);
+          // localStorage 정리 (만료된 정보 제거)
+          localStorage.removeItem('user');
+        }
+      } catch {
+        // refreshToken이 만료되었거나 유효하지 않은 경우
+        console.log('refreshToken 만료 또는 유효하지 않음');
+        // localStorage 정리 (만료된 정보 제거)
+        localStorage.removeItem('user');
+      } finally {
+        // 로딩 완료 (성공/실패 관계없이 실행)
+        setIsLoading(false);
+      }
+    };
+
+    // async 함수 실행
+    checkAuth();
   }, []); // 빈 배열: 컴포넌트 마운트 시 한 번만 실행
 
   /**
@@ -65,9 +104,10 @@ export function AuthProvider({ children }) {
     setUser(userData);
     setAccessToken(token);
 
-    // localStorage에 저장 (브라우저 새로고침 시에도 유지되도록)
+    // localStorage에는 사용자 정보만 저장 (UX 개선용)
+    // accessToken은 보안을 위해 메모리(state)에만 저장
+    // 페이지 새로고침 시에는 /refresh API를 통해 새 토큰 발급
     localStorage.setItem('user', JSON.stringify(userData));
-    localStorage.setItem('accessToken', token);
   };
 
   /**
@@ -81,9 +121,8 @@ export function AuthProvider({ children }) {
     setUser(null);
     setAccessToken(null);
 
-    // localStorage 정리
+    // localStorage 정리 (사용자 정보만 제거)
     localStorage.removeItem('user');
-    localStorage.removeItem('accessToken');
   };
 
   /**
@@ -95,27 +134,110 @@ export function AuthProvider({ children }) {
    * @param {string} newToken - 새로운 accessToken
    */
   const updateToken = (newToken) => {
+    // accessToken은 메모리(state)에만 저장
+    // localStorage에는 저장하지 않음 (보안 강화)
     setAccessToken(newToken);
-    localStorage.setItem('accessToken', newToken);
+  };
+
+  /**
+   * refreshAccessToken 함수
+   *
+   * HTTP-only 쿠키에 저장된 Refresh Token을 사용하여
+   * 새로운 Access Token을 발급받는 함수입니다.
+   *
+   * @returns {Promise<string>} - 새로운 accessToken
+   * @throws {Error} - 토큰 갱신 실패 시 에러 발생
+   *
+   * 사용 시나리오:
+   * 1. 카카오 소셜 로그인 콜백 처리 시
+   * 2. Access Token 만료 시 자동 갱신
+   * 3. 페이지 새로고침 시 인증 정보 복원
+   */
+  const refreshAccessToken = async () => {
+    try {
+      // /api/refresh 엔드포인트 호출
+      // withCredentials: true로 HTTP-only 쿠키(refreshToken)를 자동으로 전송
+      // 요청 바디는 비어있음 (쿠키에서 자동으로 refreshToken을 읽음)
+      const response = await axios.post('/api/refresh', {}, {
+        withCredentials: true
+      });
+
+      // 서버 응답 확인
+      if (response.data.success) {
+        // 토큰 갱신 성공: 사용자 정보와 새 accessToken 저장
+        // response.data.data 구조: { accessToken, user: { id, email, name, role } }
+        const newAccessToken = response.data.data.accessToken;
+        const userData = response.data.data.user;
+
+        // 상태 업데이트
+        setUser(userData);
+        setAccessToken(newAccessToken);
+
+        // localStorage에는 사용자 정보만 저장 (UX 개선용)
+        localStorage.setItem('user', JSON.stringify(userData));
+
+        console.log('Access Token 갱신 성공');
+
+        // 새로운 accessToken 반환
+        return newAccessToken;
+      } else {
+        // 토큰 갱신 실패: 에러 throw
+        throw new Error(response.data.message || '토큰 갱신에 실패했습니다.');
+      }
+    } catch (error) {
+      // Refresh Token도 만료된 경우 로그아웃 처리
+      console.error('Refresh Token 만료 또는 유효하지 않음:', error);
+
+      // 상태 초기화
+      setUser(null);
+      setAccessToken(null);
+
+      // localStorage 정리
+      localStorage.removeItem('user');
+
+      // 에러를 throw하여 호출한 쪽에서 처리할 수 있도록 함
+      throw error;
+    }
   };
 
   // Context에 제공할 값
   // 하위 컴포넌트들은 이 값들을 useAuth() 훅을 통해 사용할 수 있습니다.
   const value = {
-    user,           // 현재 로그인한 사용자 정보
-    accessToken,    // 현재 accessToken
-    isLoading,      // 로딩 상태
-    login,          // 로그인 함수
-    logout,         // 로그아웃 함수
-    updateToken,    // 토큰 갱신 함수
+    user,                // 현재 로그인한 사용자 정보
+    accessToken,         // 현재 accessToken
+    isLoading,           // 로딩 상태
+    login,               // 로그인 함수
+    logout,              // 로그아웃 함수
+    updateToken,         // 토큰 갱신 함수
+    refreshAccessToken,  // Refresh Token으로 Access Token 갱신 함수
     isAuthenticated: !!user  // 로그인 여부 (user가 있으면 true)
   };
 
   // 로딩 중일 때는 아무것도 렌더링하지 않음 (또는 로딩 스피너 표시 가능)
+  // /refresh API 응답을 기다리는 동안 화면에 아무것도 표시하지 않습니다
   if (isLoading) {
     return null;
   }
 
+  /**
+   * AuthContext.Provider를 사용하여 인증 정보를 하위 컴포넌트에 제공
+   *
+   * Context API의 동작 원리:
+   * 1. Provider 컴포넌트가 value prop을 통해 데이터를 제공
+   * 2. 하위 컴포넌트에서 useAuth() 훅을 사용하여 이 데이터에 접근
+   * 3. value가 변경되면 이를 사용하는 모든 컴포넌트가 자동으로 리렌더링
+   *
+   * 예시:
+   * - App.jsx에서 <AuthProvider>로 전체 앱을 감쌈
+   * - Login.jsx에서 useAuth()를 호출하면 여기서 제공하는 value를 받음
+   * - login() 함수를 호출하면 user, accessToken 상태가 변경됨
+   * - 이 변경사항이 자동으로 Gnb.jsx 등 모든 하위 컴포넌트에 반영됨
+   *
+   * {children}:
+   * - AuthProvider로 감싼 모든 하위 컴포넌트를 의미
+   * - App.jsx에서는 <BrowserRouter>, <Routes> 등이 children에 해당
+   * - 이 children들이 모두 인증 정보에 접근할 수 있게 됨
+   */
   return (
     <AuthContext.Provider value={value}>
       {children}

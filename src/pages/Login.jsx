@@ -169,6 +169,28 @@ function Login() {
     }
   }
 
+  /**
+   * handleKakaoLogin 함수
+   *
+   * 카카오 로그인 버튼 클릭 시 호출되는 함수입니다.
+   *
+   * 처리 과정:
+   * 1. 백엔드의 /auth/kakao/login 엔드포인트로 리다이렉트
+   * 2. 백엔드에서 카카오 OAuth 인증 페이지로 리다이렉트
+   * 3. 사용자가 카카오 로그인 완료 후 백엔드 콜백 처리
+   * 4. 백엔드에서 프론트엔드로 리다이렉트하며 토큰 전달
+   *
+   * 참고:
+   * - window.location.href를 사용하여 전체 페이지 리다이렉트
+   * - 백엔드에서 refreshToken은 HTTP-only 쿠키로 설정
+   * - 백엔드에서 프론트엔드로 리다이렉트 시 사용자 정보와 accessToken 전달
+   */
+  const handleKakaoLogin = () => {
+    // 백엔드의 카카오 로그인 엔드포인트로 리다이렉트
+    // proxy 설정에 따라 '/api/auth/kakao/login' → 'http://localhost:9080/auth/kakao/login'
+    window.location.href = '/api/auth/kakao/login';
+  }
+
   return (
     <>
       <GNB />
@@ -203,6 +225,27 @@ function Login() {
                   {isLoading ? '처리 중...' : '로그인'}
                 </button>
               </div>
+
+              {/* 소셜 로그인 구분선 */}
+              <div className="divider">
+                <span>또는</span>
+              </div>
+
+              {/* 카카오 로그인 버튼 */}
+              <div className="social-login-group">
+                <button
+                  type="button"
+                  className="kakao-login-button"
+                  onClick={handleKakaoLogin}
+                  disabled={isLoading}
+                >
+                  <svg className="kakao-icon" width="18" height="18" viewBox="0 0 18 18" fill="none">
+                    <path d="M9 0C4.029 0 0 3.285 0 7.333c0 2.55 1.65 4.794 4.14 6.075l-1.05 3.87c-.09.33.24.6.54.45l4.56-3.03c.27.03.54.045.81.045 4.971 0 9-3.285 9-7.333C18 3.285 13.971 0 9 0z" fill="currentColor"/>
+                  </svg>
+                  카카오 로그인
+                </button>
+              </div>
+
               <div className="signup-link">
                 <p>계정이 없으신가요? <Link to="/signup">회원가입</Link></p>
               </div>
