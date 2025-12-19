@@ -174,20 +174,39 @@ function Login() {
    *
    * 카카오 로그인 버튼 클릭 시 호출되는 함수입니다.
    *
-   * 처리 과정:
-   * 1. 백엔드의 /auth/kakao/login 엔드포인트로 리다이렉트
-   * 2. 백엔드에서 카카오 OAuth 인증 페이지로 리다이렉트
-   * 3. 사용자가 카카오 로그인 완료 후 백엔드 콜백 처리
-   * 4. 백엔드에서 프론트엔드로 리다이렉트하며 토큰 전달
+   * 📌 프론트엔드 관점의 카카오 로그인 플로우 (1단계):
+   *
+   * [1단계] 사용자가 "카카오 로그인" 버튼 클릭
+   *   ↓
+   * [2단계] 이 함수가 실행되어 백엔드의 /auth/kakao/login으로 전체 페이지 리다이렉트
+   *   - Vite proxy가 '/api/auth/kakao/login' → 'http://localhost:9080/auth/kakao/login'으로 전달
+   *   - 브라우저 주소창이 백엔드 URL로 변경됨
+   *   ↓
+   * [3단계] 백엔드가 카카오 인증 서버로 다시 리다이렉트
+   *   - 브라우저 주소창이 'https://kauth.kakao.com/...'으로 변경됨
+   *   - 사용자는 카카오 로그인 페이지를 보게 됨
+   *   ↓
+   * [4단계] 사용자가 카카오 계정으로 로그인 & 동의
+   *   ↓
+   * [5단계] 카카오가 백엔드의 /auth/kakao/callback으로 리다이렉트 (Authorization Code 포함)
+   *   - 이 부분은 백엔드에서 처리 (프론트엔드는 관여하지 않음)
+   *   ↓
+   * [6단계] 백엔드가 처리 완료 후 프론트엔드로 리다이렉트
+   *   - 성공: http://localhost:5173/oauth/callback?status=success
+   *   - 실패: http://localhost:5173/oauth/callback?error=에러메시지
+   *   ↓
+   * [7단계] OAuthCallback 컴포넌트가 실행됨 (2단계 처리 시작)
    *
    * 참고:
-   * - window.location.href를 사용하여 전체 페이지 리다이렉트
-   * - 백엔드에서 refreshToken은 HTTP-only 쿠키로 설정
-   * - 백엔드에서 프론트엔드로 리다이렉트 시 사용자 정보와 accessToken 전달
+   * - window.location.href는 전체 페이지 리다이렉트를 수행 (SPA가 아닌 전통적인 페이지 이동)
+   * - 이 과정에서 React 상태는 모두 초기화됨
+   * - Vite의 proxy 설정 덕분에 '/api'로 시작하는 요청이 백엔드로 전달됨
    */
   const handleKakaoLogin = () => {
-    // 백엔드의 카카오 로그인 엔드포인트로 리다이렉트
-    // proxy 설정에 따라 '/api/auth/kakao/login' → 'http://localhost:9080/auth/kakao/login'
+    // 백엔드의 카카오 로그인 시작 엔드포인트로 전체 페이지 리다이렉트
+    // - 브라우저가 http://localhost:9080/auth/kakao/login 으로 이동
+    // - 백엔드는 이 요청을 받아 카카오 인증 서버로 다시 리다이렉트
+    // - 현재 페이지(Login.jsx)는 언마운트되고 모든 상태가 사라짐
     window.location.href = '/api/auth/kakao/login';
   }
 

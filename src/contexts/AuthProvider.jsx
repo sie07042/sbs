@@ -40,6 +40,17 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     // async 함수를 정의하여 API 호출
     const checkAuth = async () => {
+      // ========================================
+      // 🔑 중요: 이미 로그인된 상태라면 refresh 호출 생략
+      // ========================================
+      // user와 accessToken이 이미 메모리에 있다면 (예: 카카오 로그인 직후)
+      // /refresh API를 호출할 필요가 없음
+      if (user && accessToken) {
+        console.log('이미 로그인된 상태 - /refresh API 호출 생략');
+        setIsLoading(false);
+        return;
+      }
+
       // localStorage에서 저장된 사용자 정보 확인
       const savedUser = localStorage.getItem('user');
 
@@ -51,33 +62,60 @@ export function AuthProvider({ children }) {
       }
 
       // 사용자 정보가 있으면 /refresh API 호출하여 토큰 갱신 시도
+      // (페이지 새로고침 시나리오: localStorage에는 user가 있지만 메모리에는 없음)
       try {
+        console.log('=== /api/refresh 호출 (페이지 새로고침) ===');
+        console.log('localStorage의 user:', savedUser);
+        console.log('현재 브라우저 쿠키:', document.cookie);
+
         // /api/refresh 엔드포인트 호출
         // withCredentials: true로 HTTP-only 쿠키(refreshToken) 포함
         const response = await axios.post('/api/refresh', {}, {
           withCredentials: true
         });
 
+        console.log('=== /api/refresh 응답 성공 ===');
+        console.log('응답 데이터:', response.data);
+
         // 서버 응답 확인
         if (response.data.success) {
           // 토큰 갱신 성공: 사용자 정보와 새 accessToken 저장
-          // response.data.data 구조: { accessToken, user: { id, email, name, role } }
-          setUser(response.data.data.user);
-          setAccessToken(response.data.data.accessToken);
+          const token = response.data.data.accessToken;
+
+          // 백엔드가 user 정보를 반환하는 경우와 안 하는 경우 모두 처리
+          let userData = response.data.data.user;
+
+          // 백엔드가 user 정보를 반환하지 않으면 localStorage에서 가져옴
+          if (!userData) {
+            console.log('백엔드가 user 정보를 반환하지 않음 - localStorage에서 복원');
+            userData = JSON.parse(savedUser);
+          }
+
+          console.log('상태 업데이트 전 - user:', user);
+          console.log('상태 업데이트 전 - accessToken:', accessToken);
+          console.log('새로 설정할 userData:', userData);
+          console.log('새로 설정할 token:', token);
+
+          setUser(userData);
+          setAccessToken(token);
 
           // localStorage에는 사용자 정보만 저장 (UX 개선용, accessToken은 저장하지 않음)
-          // 이렇게 하면 페이지 로딩 시 사용자 이름을 바로 표시할 수 있습니다
-          localStorage.setItem('user', JSON.stringify(response.data.data.user));
-          console.log('토큰 갱신 성공');
+          localStorage.setItem('user', JSON.stringify(userData));
+          console.log('토큰 갱신 성공 - 상태 업데이트 완료');
         } else {
           // 토큰 갱신 실패: 로그아웃 상태 유지
           console.log('토큰 갱신 실패:', response.data.message);
           // localStorage 정리 (만료된 정보 제거)
           localStorage.removeItem('user');
         }
-      } catch {
+      } catch (error) {
         // refreshToken이 만료되었거나 유효하지 않은 경우
-        console.log('refreshToken 만료 또는 유효하지 않음');
+        console.error('=== /api/refresh 요청 실패 ===');
+        console.error('에러 상태 코드:', error.response?.status);
+        console.error('에러 응답 데이터:', error.response?.data);
+        console.error('에러 헤더:', error.response?.headers);
+        console.error('전체 에러:', error);
+
         // localStorage 정리 (만료된 정보 제거)
         localStorage.removeItem('user');
       } finally {
@@ -88,7 +126,8 @@ export function AuthProvider({ children }) {
 
     // async 함수 실행
     checkAuth();
-  }, []); // 빈 배열: 컴포넌트 마운트 시 한 번만 실행
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // 빈 배열: 컴포넌트 마운트 시 한 번만 실행 (user, accessToken은 의도적으로 제외)
 
   /**
    * login 함수
@@ -114,15 +153,40 @@ export function AuthProvider({ children }) {
    * logout 함수
    *
    * 로그아웃 시 호출되는 함수입니다.
-   * 저장된 모든 인증 정보를 삭제합니다.
+   * 서버에 로그아웃 요청을 보내고 저장된 모든 인증 정보를 삭제합니다.
+   *
+   * 처리 과정:
+   * 1. 백엔드 /api/logout 엔드포인트 호출 (HTTP-only 쿠키의 refreshToken 삭제)
+   * 2. 프론트엔드 상태 초기화 (user, accessToken)
+   * 3. localStorage 정리
    */
-  const logout = () => {
-    // 상태 초기화
-    setUser(null);
-    setAccessToken(null);
+  const logout = async () => {
+    try {
+      // 백엔드에 로그아웃 요청
+      // - HTTP-only 쿠키의 refreshToken을 삭제하기 위해 서버 호출 필요
+      // - withCredentials: true로 쿠키 전송
+      await axios.post('/api/logout', {}, {
+        withCredentials: true
+      });
 
-    // localStorage 정리 (사용자 정보만 제거)
-    localStorage.removeItem('user');
+      console.log('서버 로그아웃 성공');
+    } catch (error) {
+      // 서버 로그아웃 실패 시에도 클라이언트 상태는 정리
+      console.error('서버 로그아웃 실패:', error);
+      console.log('클라이언트 상태만 정리합니다.');
+    } finally {
+      // 서버 응답 성공/실패 관계없이 클라이언트 상태 정리
+      // (네트워크 오류나 서버 에러가 있어도 사용자는 로그아웃된 것처럼 보여야 함)
+
+      // 상태 초기화
+      setUser(null);
+      setAccessToken(null);
+
+      // localStorage 정리 (사용자 정보만 제거)
+      localStorage.removeItem('user');
+
+      console.log('클라이언트 로그아웃 완료');
+    }
   };
 
   /**
@@ -155,12 +219,21 @@ export function AuthProvider({ children }) {
    */
   const refreshAccessToken = async () => {
     try {
+      // 디버깅: 현재 쿠키 확인
+      console.log('=== /api/refresh 호출 시작 ===');
+      console.log('현재 쿠키:', document.cookie);
+      console.log('withCredentials: true');
+
       // /api/refresh 엔드포인트 호출
       // withCredentials: true로 HTTP-only 쿠키(refreshToken)를 자동으로 전송
-      // 요청 바디는 비어있음 (쿠키에서 자동으로 refreshToken을 읽음)
+      // 요청 바디는 빈 객체 {} (일부 백엔드는 null을 받지 않을 수 있음)
       const response = await axios.post('/api/refresh', {}, {
-        withCredentials: true
+        withCredentials: true,
+        headers: { 'Content-Type': 'application/json' }
       });
+
+      console.log('=== /api/refresh 응답 성공 ===');
+      console.log('응답 데이터:', response.data);
 
       // 서버 응답 확인
       if (response.data.success) {
@@ -186,7 +259,11 @@ export function AuthProvider({ children }) {
       }
     } catch (error) {
       // Refresh Token도 만료된 경우 로그아웃 처리
-      console.error('Refresh Token 만료 또는 유효하지 않음:', error);
+      console.error('=== /api/refresh 요청 실패 ===');
+      console.error('에러 상태 코드:', error.response?.status);
+      console.error('에러 메시지:', error.response?.data);
+      console.error('에러 헤더:', error.response?.headers);
+      console.error('전체 에러:', error);
 
       // 상태 초기화
       setUser(null);
@@ -212,12 +289,6 @@ export function AuthProvider({ children }) {
     refreshAccessToken,  // Refresh Token으로 Access Token 갱신 함수
     isAuthenticated: !!user  // 로그인 여부 (user가 있으면 true)
   };
-
-  // 로딩 중일 때는 아무것도 렌더링하지 않음 (또는 로딩 스피너 표시 가능)
-  // /refresh API 응답을 기다리는 동안 화면에 아무것도 표시하지 않습니다
-  if (isLoading) {
-    return null;
-  }
 
   /**
    * AuthContext.Provider를 사용하여 인증 정보를 하위 컴포넌트에 제공
