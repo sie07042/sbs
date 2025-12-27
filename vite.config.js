@@ -6,6 +6,10 @@ export default defineConfig({
   plugins: [react()],
   // 개발 서버 설정
   server: {
+    // port: 개발 서버가 사용할 포트 번호를 명시적으로 지정
+    // 백엔드 CORS 설정이 localhost:5173만 허용하므로 포트를 고정합니다.
+    port: 5173,
+
     // proxy 설정: API 요청을 백엔드 서버로 전달
     // 프론트엔드(localhost:5173)에서 백엔드(localhost:9080)로 요청 시 CORS 문제 해결
     proxy: {
