@@ -14,7 +14,7 @@ export default defineConfig({
     // 프론트엔드(localhost:5173)에서 백엔드(localhost:9080)로 요청 시 CORS 문제 해결
     proxy: {
       // '/api'로 시작하는 모든 요청을 백엔드 서버로 프록시
-      // 예: axios.post('/api/signup') → http://localhost:9080/signup
+      // 예: axios.post('/api/signup') → http://localhost:9080/api/signup
       '/api': {
         // target: 실제 API 서버의 주소
         // 모든 '/api' 요청이 이 주소로 전달됩니다
@@ -32,24 +32,15 @@ export default defineConfig({
         // 가상 호스트(Virtual Host)를 사용하는 서버에서 특히 중요합니다.
         changeOrigin: true,
 
-        // rewrite: 요청 경로를 변경하는 함수
+        // rewrite 옵션 제거: /api 경로를 그대로 유지
         //
         // 동작 과정:
         // 1. 프론트엔드에서 요청: axios.post('/api/signup')
-        // 2. rewrite 함수 실행: '/api/signup' → '/signup'
-        // 3. 최종 요청 주소: http://localhost:9080/signup
+        // 2. Vite proxy가 그대로 전달: http://localhost:9080/api/signup
         //
-        // 정규표현식 설명:
-        // - ^: 문자열의 시작을 의미
-        // - \/api: '/api' 문자열과 정확히 일치
-        // - replace(/^\/api/, ''): 문자열 시작 부분의 '/api'를 빈 문자열로 교체
-        //
-        // 예시:
-        // - '/api/signup'  → '/signup'
-        // - '/api/login'   → '/login'
-        // - '/api/user/1'  → '/user/1'
-        // - '/signup'      → '/signup' (변경 없음, '/api'로 시작하지 않으므로)
-        rewrite: (path) => path.replace(/^\/api/, ''),
+        // 이제 개발 환경(Vite)과 프로덕션 환경(Nginx)에서 동일한 경로 사용:
+        // - 개발: /api/signup → http://localhost:9080/api/signup (Vite proxy)
+        // - 프로덕션: /api/signup → http://backend:9080/api/signup (Nginx proxy)
       },
     },
   },
