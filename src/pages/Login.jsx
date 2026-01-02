@@ -114,7 +114,7 @@ function Login() {
       // axios를 사용하여 서버에 POST 요청 전송
       // '/api/loginEx' 요청 → proxy를 통해 'http://localhost:9080/loginEx'으로 전달됨
       // withCredentials: true 옵션으로 쿠키(refreshToken)를 받을 수 있도록 설정
-      const response = await axios.post('/api/loginEx', {
+      const response = await axios.post('/api/login', {
         email: formData.email,
         password: formData.password
       }, {
@@ -218,7 +218,9 @@ function Login() {
     // - 브라우저가 http://localhost:9080/auth/kakao/login?redirectUrl=... 으로 이동
     // - 백엔드는 이 요청을 받아 카카오 인증 서버로 다시 리다이렉트
     // - 현재 페이지(Login.jsx)는 언마운트되고 모든 상태가 사라짐
-    window.location.href = `/api/auth/kakao/login?redirectUrl=${encodedCallbackUrl}`;
+    // /auth/kakao/login 경로로 직접 호출 (Vite proxy 설정에 따라 백엔드로 전달됨)
+    // 백엔드 컨트롤러: @RequestMapping("/auth/kakao") + @GetMapping("/login")
+    window.location.href = `/auth/kakao/login?redirectUrl=${encodedCallbackUrl}`;
   }
 
   return (

@@ -137,10 +137,10 @@ function OAuthCallback() {
             console.log('카카오 로그인 성공 - 토큰 교환 API 호출 시작');
 
             // 백엔드에 토큰 교환 요청
-            // POST /api/auth/kakao/exchange-token
+            // POST /auth/kakao/exchange-token
             //
             // 🔑 중요한 점:
-            // - Vite proxy가 '/api' → 'http://localhost:9080'으로 변환
+            // - Vite proxy가 '/auth' → 'http://localhost:9080'으로 변환
             // - withCredentials: true 덕분에 브라우저가 세션 쿠키를 자동으로 전송
             // - 백엔드는 세션 쿠키로 사용자를 식별하고 세션에서 JWT 토큰을 꺼냄
             //
@@ -148,7 +148,7 @@ function OAuthCallback() {
             // 1. 세션에서 JWT 토큰들을 가져옴 (accessToken, refreshToken)
             // 2. Refresh Token을 HTTP-only 쿠키로 설정 (response.addCookie)
             // 3. Access Token과 사용자 정보를 JSON 응답으로 반환
-            const response = await axios.post('/api/auth/kakao/exchange-token', {}, {
+            const response = await axios.post('/auth/kakao/exchange-token', {}, {
               withCredentials: true  // 🔒 필수! 세션 쿠키 전송 및 HTTP-only 쿠키 수신
             });
 

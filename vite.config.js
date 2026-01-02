@@ -42,6 +42,14 @@ export default defineConfig({
         // - 개발: /api/signup → http://localhost:9080/api/signup (Vite proxy)
         // - 프로덕션: /api/signup → http://backend:9080/api/signup (Nginx proxy)
       },
+
+      // '/oauth'로 시작하는 모든 요청을 백엔드 서버로 프록시
+      // 카카오 로그인 등 OAuth 관련 요청 처리
+      // 예: /oauth/kakao/login → http://localhost:9080/oauth/kakao/login
+      '/auth': {
+        target: 'http://localhost:9080',
+        changeOrigin: true,
+      },
     },
   },
 })
