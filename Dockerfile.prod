@@ -1,49 +1,104 @@
 # ==========================================
 # 멀티 스테이지 빌드: React 프론트엔드 Docker 이미지 (프로덕션)
 # ==========================================
-# Stage 1: Build (개발 의존성 포함하여 빌드)
-# Stage 2: Production (Nginx로 정적 파일 서빙)
+#
+# 이 Dockerfile은 프로덕션 환경에서 사용하는 최적화된 이미지를 생성합니다.
+#
+# 멀티 스테이지 빌드의 장점:
+# 1. 최종 이미지 크기 최소화 (node_modules 제외)
+# 2. 보안 강화 (빌드 도구가 프로덕션 이미지에 포함되지 않음)
+# 3. 빌드 캐시 효율적 활용
+#
+# 최종 이미지 구성:
+# - 베이스: nginx:alpine (~40MB)
+# - React 빌드 결과물: dist/ 폴더 (~5-10MB)
+# - Nginx 설정 파일: nginx.prod.conf
+#
+# 사용 방법:
+#   docker build -f Dockerfile.prod -t frontend:prod .
+#   docker run -p 80:80 frontend:prod
+#
+# ==========================================
 
 # ==========================================
-# Stage 1: Build Stage
+# Stage 1: Build Stage (빌드 스테이지)
 # ==========================================
+# Node.js 환경에서 React 앱을 빌드합니다.
+# 이 스테이지는 최종 이미지에 포함되지 않습니다.
 FROM node:20-alpine AS builder
 
 # 작업 디렉토리 설정
+# 컨테이너 내부의 /app 디렉토리에서 작업
 WORKDIR /app
 
 # package.json과 package-lock.json 복사 (캐시 활용)
-# 의존성이 변경되지 않으면 이 레이어는 캐시됨
+# ============================================
+# Docker의 레이어 캐싱을 활용하기 위해 의존성 파일을 먼저 복사합니다.
+# package*.json 파일이 변경되지 않으면 npm ci 레이어가 캐시되어
+# 빌드 시간이 크게 단축됩니다.
 COPY package*.json ./
 
 # 의존성 설치
-# --frozen-lockfile: package-lock.json을 정확히 따름 (CI/CD 환경)
+# ============================================
+# npm ci vs npm install:
+# - npm ci: package-lock.json을 정확히 따름 (CI/CD 환경에 적합)
+# - npm ci: node_modules를 삭제하고 새로 설치 (깨끗한 상태 보장)
+# - npm ci: package.json과 package-lock.json이 다르면 오류 발생
 RUN npm ci
 
 # 소스 코드 복사
+# ============================================
+# package*.json 이후에 소스 코드를 복사하면
+# 소스 코드만 변경된 경우 npm ci 레이어를 재사용할 수 있습니다.
 COPY . .
 
 # 프로덕션 빌드
-# vite build 명령으로 dist/ 폴더에 최적화된 정적 파일 생성
+# ============================================
+# vite build 명령 실행 (package.json의 scripts.build)
+# 결과물: /app/dist 폴더에 최적화된 정적 파일 생성
+#   - index.html (압축된 HTML)
+#   - assets/*.js (번들링, 트리쉐이킹, 압축된 JavaScript)
+#   - assets/*.css (압축된 CSS)
+#   - assets/* (최적화된 이미지, 폰트 등)
 RUN npm run build
 
 # ==========================================
-# Stage 2: Production Stage (Nginx)
+# Stage 2: Production Stage (프로덕션 스테이지)
 # ==========================================
+# Nginx를 사용하여 빌드된 정적 파일을 서빙합니다.
+# Alpine 리눅스 기반으로 이미지 크기가 작습니다 (~40MB).
 FROM nginx:alpine
 
 # 빌드된 정적 파일을 Nginx의 기본 웹 루트로 복사
-# builder 스테이지의 /app/dist → Nginx의 /usr/share/nginx/html
+# ============================================
+# --from=builder: 이전 스테이지(builder)에서 파일 복사
+# /app/dist: React 빌드 결과물 위치
+# /usr/share/nginx/html: Nginx 기본 웹 루트
+#
+# 이 단계에서 node_modules와 소스 코드는 복사되지 않으므로
+# 최종 이미지 크기가 크게 줄어듭니다.
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 # 프로덕션용 Nginx 설정 파일 복사
-# API 프록시 설정과 SPA 라우팅을 위한 설정 포함
-# prod-backend 컨테이너로 프록시하도록 설정됨
+# ============================================
+# nginx.prod.conf 파일에 포함된 설정:
+# - /api/* 요청을 백엔드(prod-backend:9080)로 프록시
+# - /auth/* 요청을 백엔드로 프록시 (OAuth 인증)
+# - SPA 라우팅 지원 (모든 경로를 index.html로 리다이렉트)
+# - Gzip 압축 활성화
+# - 정적 파일 캐싱 설정
+# - 보안 헤더 설정
 COPY nginx.prod.conf /etc/nginx/conf.d/default.conf
 
 # 80 포트 노출
+# ============================================
+# EXPOSE는 문서화 목적이며, 실제 포트 매핑은
+# docker run -p 80:80 또는 docker-compose.yml에서 설정
 EXPOSE 80
 
 # Nginx 실행 (포그라운드 모드)
-# daemon off는 Docker 컨테이너가 종료되지 않도록 함
+# ============================================
+# daemon off 옵션이 없으면 Nginx가 백그라운드로 실행되고
+# 컨테이너가 즉시 종료됩니다.
+# Docker 컨테이너는 메인 프로세스가 종료되면 함께 종료되기 때문입니다.
 CMD ["nginx", "-g", "daemon off;"]
