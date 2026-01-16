@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
@@ -64,6 +64,104 @@ function Profile() {
 
   // API 요청 중인지 여부를 나타내는 로딩 상태
   const [isLoading, setIsLoading] = useState(false);
+
+  // 프로필 데이터 로딩 중인지 여부
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+
+  /**
+   * useEffect: 프로필 데이터 로드
+   *
+   * 컴포넌트가 마운트될 때 백엔드에서 기존 프로필 정보를 불러옵니다.
+   * GET /api/user/profile API를 호출하여 폼 데이터를 초기화합니다.
+   */
+  useEffect(() => {
+    const loadProfile = async () => {
+      // 토큰이 없으면 로드하지 않음
+      if (!accessToken) {
+        setIsLoadingProfile(false);
+        return;
+      }
+
+      try {
+        console.log('=== 프로필 데이터 로드 시작 ===');
+
+        // 프로필 조회 API 호출
+        const response = await axios.get('/api/user/profile', {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          },
+          withCredentials: true
+        });
+
+        console.log('=== 프로필 조회 응답 ===');
+        console.log('전체 응답:', JSON.stringify(response.data, null, 2));
+
+        // 응답 데이터가 있으면 폼에 설정
+        if (response.data && response.data.data) {
+          const profileData = response.data.data;
+
+          // 각 필드별 상세 로그
+          console.log('=== 프로필 데이터 상세 ===');
+          console.log('userId:', profileData.userId);
+          console.log('email:', profileData.email);
+          console.log('name:', profileData.name);
+          console.log('profileImage:', profileData.profileImage);
+          console.log('bgImage:', profileData.bgImage);
+          console.log('lastName:', profileData.lastName);
+          console.log('firstName:', profileData.firstName);
+          console.log('phoneNumber:', profileData.phoneNumber);
+          console.log('country:', profileData.country);
+          console.log('address1:', profileData.address1);
+          console.log('address2:', profileData.address2);
+          console.log('birth:', profileData.birth);
+
+          // 프로필 이미지 설정
+          if (profileData.profileImage) {
+            console.log('프로필 이미지 설정:', profileData.profileImage);
+            setPreviewImage(profileData.profileImage);
+          } else {
+            console.log('프로필 이미지 없음 (null 또는 undefined)');
+          }
+
+          // 배경 이미지 설정
+          if (profileData.bgImage) {
+            console.log('배경 이미지 설정:', profileData.bgImage);
+            setPreviewBackground(profileData.bgImage);
+          } else {
+            console.log('배경 이미지 없음 (null 또는 undefined)');
+          }
+
+          // 폼 데이터 설정
+          // birth 필드는 "2026-01-01T00:00:00" 형식이므로 "2026-01-01"로 변환
+          setFormData({
+            name: profileData.name || '',
+            lastName: profileData.lastName || '',
+            firstName: profileData.firstName || '',
+            phoneNumber: profileData.phoneNumber || '',
+            country: profileData.country?.toString() || '1',
+            address1: profileData.address1 || '',
+            address2: profileData.address2 || '',
+            birth: profileData.birth ? profileData.birth.split('T')[0] : ''
+          });
+
+          console.log('=== 프로필 데이터 로드 완료 ===');
+        } else {
+          console.log('응답에 data 필드가 없음:', response.data);
+        }
+      } catch (error) {
+        console.error('프로필 조회 실패:', error);
+        // 에러가 발생해도 페이지는 표시 (빈 폼으로)
+        if (error.response) {
+          console.error('에러 상태:', error.response.status);
+          console.error('에러 데이터:', error.response.data);
+        }
+      } finally {
+        setIsLoadingProfile(false);
+      }
+    };
+
+    loadProfile();
+  }, [accessToken]);
 
   /**
    * handleImageClick 함수
@@ -298,25 +396,32 @@ function Profile() {
     setIsLoading(true);
 
     try {
-      // 이미지 업로드 처리 (선택된 경우에만)
-      let profileImageUrl = null;
-      let bgImageUrl = null;
+      // 이미지 업로드 처리
+      // 새 파일을 선택한 경우에만 업로드, 그렇지 않으면 기존 URL 유지
+      let profileImageUrl = previewImage;  // 기존 이미지 URL로 초기화
+      let bgImageUrl = previewBackground;  // 기존 배경 이미지 URL로 초기화
 
-      // 프로필 이미지 업로드
+      // 프로필 이미지 업로드 (새 파일을 선택한 경우에만)
       if (selectedFile) {
-        profileImageUrl = await uploadImage(selectedFile, 'profile');
+        const uploadedUrl = await uploadImage(selectedFile, 'profile');
+        if (uploadedUrl) {
+          profileImageUrl = uploadedUrl;
+        }
       }
 
-      // 배경 이미지 업로드
+      // 배경 이미지 업로드 (새 파일을 선택한 경우에만)
       if (selectedBackgroundFile) {
-        bgImageUrl = await uploadImage(selectedBackgroundFile, 'background');
+        const uploadedUrl = await uploadImage(selectedBackgroundFile, 'background');
+        if (uploadedUrl) {
+          bgImageUrl = uploadedUrl;
+        }
       }
 
       // 백엔드 UserProfileUpdateRequest DTO에 맞춰 요청 데이터 구성
       const requestData = {
         // User 테이블 필드
         name: formData.name,                              // 닉네임
-        profileImage: profileImageUrl,                    // 프로필 이미지 URL (새로 업로드한 경우)
+        profileImage: profileImageUrl || null,            // 프로필 이미지 URL (기존 또는 새로 업로드)
 
         // UserProfile 테이블 필드
         lastName: formData.lastName || null,              // 성
@@ -326,14 +431,15 @@ function Profile() {
         address1: formData.address1 || null,              // 주소1
         address2: formData.address2 || null,              // 주소2
         birth: formData.birth ? `${formData.birth}T00:00:00` : null,  // LocalDateTime 형식
-        bgImage: bgImageUrl                               // 배경 이미지 URL (새로 업로드한 경우)
+        bgImage: bgImageUrl || null                       // 배경 이미지 URL (기존 또는 새로 업로드)
       };
 
       console.log('=== 프로필 수정 요청 데이터 ===');
-      console.log('Request Data:', requestData);
+      console.log('Request Data:', JSON.stringify(requestData, null, 2));
 
       // 프로필 수정 API 호출
-      const response = await axios.put('/api/profile', requestData, {
+      // 백엔드 엔드포인트: PUT /api/user/profile
+      const response = await axios.put('/api/user/profile', requestData, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${accessToken}`
@@ -341,12 +447,17 @@ function Profile() {
         withCredentials: true
       });
 
-      if (response.data.success) {
+      console.log('=== 프로필 수정 응답 ===');
+      console.log('Response:', response.data);
+
+      // 백엔드 응답 처리
+      // 응답 형식: { success: true/false, message: "...", data: {...} }
+      if (response.data && (response.data.success || response.status === 200)) {
         alert('프로필이 수정되었습니다.');
         // 홈 페이지로 이동
         navigate('/');
       } else {
-        alert(response.data.message || '프로필 수정에 실패했습니다.');
+        alert(response.data?.message || '프로필 수정에 실패했습니다.');
       }
     } catch (error) {
       console.error('프로필 수정 에러:', error);
@@ -373,6 +484,24 @@ function Profile() {
   if (!isAuthenticated) {
     navigate('/login');
     return null;
+  }
+
+  // 프로필 데이터 로딩 중일 때 로딩 표시
+  if (isLoadingProfile) {
+    return (
+      <>
+        <GNB />
+        <div className="profile-container">
+          <div className="profile-card">
+            <h1>프로필 수정</h1>
+            <div className="profile-loading">
+              <p>프로필 정보를 불러오는 중...</p>
+            </div>
+          </div>
+        </div>
+        <Footer />
+      </>
+    );
   }
 
   return (
