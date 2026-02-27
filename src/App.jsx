@@ -5,6 +5,9 @@ import Signup from './pages/Signup'
 import Login from './pages/Login'
 import OAuthCallback from './pages/OAuthCallback'
 import Profile from './pages/Profile'
+import PostList from './pages/PostList'
+import PostCreate from './pages/PostCreate'
+import PostDetail from './pages/PostDetail'
 import { AuthProvider } from './contexts/AuthProvider'
 
 function App() {
@@ -22,6 +25,10 @@ function App() {
             <Route path='/oauth/callback' element={<OAuthCallback />}/>
             {/* 프로필 수정 페이지 */}
             <Route path='/profile' element={<Profile />}/>
+            {/* 게시글 관련 페이지 */}
+            <Route path='/posts' element={<PostList />}/>
+            <Route path='/posts/create' element={<PostCreate />}/>
+            <Route path='/posts/:id' element={<PostDetail />}/>
           </Routes>
         </BrowserRouter>
       </AuthProvider>

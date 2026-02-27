@@ -1,0 +1,232 @@
+/* ==========================================
+   게시글 상세 페이지 스타일
+   ==========================================
+   게시글의 전체 내용과 이미지를 표시하는 페이지입니다.
+*/
+
+/* 상세 페이지 메인 컨테이너 */
+.post-detail-container {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 100px 20px 80px;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+/* 상세 카드 */
+.post-detail-card {
+  background: rgba(26, 26, 26, 0.8);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+/* ==========================================
+   작성자 정보 헤더
+   ========================================== */
+.post-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.post-detail-author {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+/* 작성자 프로필 이미지 */
+.post-detail-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* 프로필 이미지 없을 때 이니셜 */
+.post-detail-avatar-placeholder {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: white;
+}
+
+.post-detail-author-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.post-detail-author-name {
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.post-detail-date {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.8rem;
+}
+
+/* ==========================================
+   삭제 버튼
+   ========================================== */
+.post-detail-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.delete-button {
+  background: rgba(255, 59, 48, 0.2);
+  color: #ff6b6b;
+  border: 1px solid rgba(255, 59, 48, 0.3);
+  padding: 0.4rem 1rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.delete-button:hover {
+  background: rgba(255, 59, 48, 0.4);
+}
+
+/* ==========================================
+   게시글 본문
+   ========================================== */
+.post-detail-content {
+  margin-bottom: 1.5rem;
+}
+
+.post-detail-content p {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1rem;
+  line-height: 1.8;
+  margin: 0;
+  /* 줄바꿈 유지 */
+  white-space: pre-wrap;
+  /* 긴 단어 줄바꿈 */
+  word-break: break-word;
+}
+
+/* ==========================================
+   이미지 갤러리
+   ========================================== */
+.post-detail-images {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  margin-bottom: 1.5rem;
+}
+
+.post-detail-image-item {
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.post-detail-image-item img {
+  width: 100%;
+  max-height: 500px;
+  object-fit: contain;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+}
+
+/* ==========================================
+   하단 통계
+   ========================================== */
+.post-detail-stats {
+  display: flex;
+  gap: 1.2rem;
+  padding: 1rem 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 1rem;
+}
+
+.post-detail-stat {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.9rem;
+}
+
+/* 공개 범위 표시 */
+.post-detail-visibility {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+/* ==========================================
+   하단 네비게이션
+   ========================================== */
+.post-detail-footer {
+  margin-top: 1rem;
+}
+
+.back-button {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.back-button:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+}
+
+/* ==========================================
+   로딩 / 에러 상태
+   ========================================== */
+.post-detail-loading,
+.post-detail-error {
+  text-align: center;
+  padding: 4rem 1rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.post-detail-loading p,
+.post-detail-error p {
+  margin: 0 0 1.5rem;
+  font-size: 1rem;
+}
+
+/* ==========================================
+   반응형 대응
+   ========================================== */
+@media (max-width: 768px) {
+  .post-detail-container {
+    padding: 80px 12px 60px;
+  }
+
+  .post-detail-card {
+    padding: 1.5rem;
+  }
+
+  .post-detail-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.8rem;
+  }
+
+  .post-detail-actions {
+    align-self: flex-end;
+  }
+}

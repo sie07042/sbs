@@ -57,8 +57,11 @@ function GNB() {
         <div className="gnb-container">
           {/* 왼쪽 영역: 네비게이션 링크 */}
           <div className="gnb-left">
-            <Link to="/" className={`gnb-link ${location.pathname === '/home' ? 'active' : ''}`}>
+            <Link to="/" className={`gnb-link ${location.pathname === '/' ? 'active' : ''}`}>
               HOME
+            </Link>
+            <Link to="/posts" className={`gnb-link ${location.pathname.startsWith('/posts') ? 'active' : ''}`}>
+              게시글
             </Link>
           </div>
 
