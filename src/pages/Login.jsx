@@ -213,13 +213,13 @@ function Login() {
     const encodedCallbackUrl = encodeURIComponent(callbackUrl);
 
     // 백엔드의 카카오 로그인 시작 엔드포인트로 전체 페이지 리다이렉트
+    // - /api/auth/kakao/login 경로로 호출 (nginx가 백엔드로 프록시)
     // - redirectUrl 파라미터: 백엔드가 OAuth 플로우 완료 후 리다이렉트할 프론트엔드 URL
     // - 백엔드는 이 URL을 세션에 저장했다가 카카오 콜백 처리 후 사용
-    // - 브라우저가 http://localhost:9080/auth/kakao/login?redirectUrl=... 으로 이동
     // - 백엔드는 이 요청을 받아 카카오 인증 서버로 다시 리다이렉트
     // - 현재 페이지(Login.jsx)는 언마운트되고 모든 상태가 사라짐
-    // /auth/kakao/login 경로로 직접 호출 (Vite proxy 설정에 따라 백엔드로 전달됨)
     // 백엔드 컨트롤러: @RequestMapping("/auth/kakao") + @GetMapping("/login")
+    // /auth/kakao/login 경로로 호출 (nginx /auth/ location block이 백엔드로 프록시)
     window.location.href = `/auth/kakao/login?redirectUrl=${encodedCallbackUrl}`;
   }
 

@@ -33,9 +33,9 @@ export const API_CONFIG = {
     // 파일 업로드
     uploadImage: '/upload/image',
 
-    // OAuth (카카오)
-    kakaoLogin: '/kakao/login',
-    kakaoCallback: '/kakao/callback',
+    // OAuth (카카오) - /api/auth 경로를 통해 백엔드로 프록시
+    kakaoLogin: '/auth/kakao/login',
+    kakaoCallback: '/auth/kakao/callback',
     kakaoExchangeToken: '/auth/kakao/exchange-token',
   },
 };

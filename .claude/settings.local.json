@@ -1,7 +1,12 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(docker compose down:*)",
+      "Bash(docker compose up:*)",
+      "Bash(docker network inspect:*)",
+      "Bash(docker network connect:*)",
+      "Bash(docker ps:*)"
     ]
   }
 }

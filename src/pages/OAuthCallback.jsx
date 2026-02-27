@@ -148,6 +148,7 @@ function OAuthCallback() {
             // 1. 세션에서 JWT 토큰들을 가져옴 (accessToken, refreshToken)
             // 2. Refresh Token을 HTTP-only 쿠키로 설정 (response.addCookie)
             // 3. Access Token과 사용자 정보를 JSON 응답으로 반환
+            // /auth/kakao/exchange-token 경로로 호출 (nginx /auth/ location block이 백엔드로 프록시)
             const response = await axios.post('/auth/kakao/exchange-token', {}, {
               withCredentials: true  // 🔒 필수! 세션 쿠키 전송 및 HTTP-only 쿠키 수신
             });
