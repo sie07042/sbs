@@ -219,8 +219,9 @@ function Login() {
     // - 백엔드는 이 요청을 받아 카카오 인증 서버로 다시 리다이렉트
     // - 현재 페이지(Login.jsx)는 언마운트되고 모든 상태가 사라짐
     // 백엔드 컨트롤러: @RequestMapping("/auth/kakao") + @GetMapping("/login")
-    // /auth/kakao/login 경로로 호출 (nginx /auth/ location block이 백엔드로 프록시)
-    window.location.href = `/auth/kakao/login?redirectUrl=${encodedCallbackUrl}`;
+    // /api/auth/kakao/login 경로로 호출 (nginx /api/ location block이 백엔드로 프록시)
+    // 백엔드 컨트롤러가 /api/auth/kakao/login에 매핑되어 있음
+    window.location.href = `/api/auth/kakao/login?redirectUrl=${encodedCallbackUrl}`;
   }
 
   return (
