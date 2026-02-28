@@ -104,7 +104,7 @@ networks:
 #
 # Q1. "network prod-network not found" 오류
 # A1. 백엔드를 먼저 배포하거나 수동으로 네트워크 생성
-#     docker network create prod-network
+#     docker network create prod-networka
 #
 # Q2. 502 Bad Gateway (API 요청 실패)
 # A2. 백엔드 컨테이너 상태 확인

@@ -12,21 +12,29 @@
 // ==========================================
 // API 설정
 // ==========================================
+// export const API_CONFIG = {
+//   // API 베이스 URL
+//   baseUrl: import.meta.env.VITE_API_BASE_URL || '/api',
+
+//   // 인증 관련 API 베이스 URL
+//   authBaseUrl: import.meta.env.VITE_AUTH_BASE_URL || '/auth',
+
+//   // API 엔드포인트 정의
+//   endpoints: {
+//     // 인증 관련
+//     login: '/login',
+//     signup: '/signup',
+//     logout: '/logout',
+//     refresh: '/refresh',
+
 export const API_CONFIG = {
-  // API 베이스 URL
   baseUrl: import.meta.env.VITE_API_BASE_URL || '/api',
-
-  // 인증 관련 API 베이스 URL
-  authBaseUrl: import.meta.env.VITE_AUTH_BASE_URL || '/auth',
-
-  // API 엔드포인트 정의
+  authBaseUrl: import.meta.env.VITE_AUTH_BASE_URL || '/api/auth',
   endpoints: {
-    // 인증 관련
     login: '/login',
     signup: '/signup',
     logout: '/logout',
     refresh: '/refresh',
-
     // 사용자 프로필
     profile: '/user/profile',
 
