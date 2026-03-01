@@ -1,4 +1,4 @@
-.signup-container {  
+.signup-container {
   min-height: 100vh;
   display: flex;
   justify-content: center;
@@ -17,7 +17,7 @@
   width: 600px;
   max-width: 600px;
   box-sizing: border-box;
-  box-shadow: 
+  box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.3),
     0 0 0 1px rgba(255, 255, 255, 0.1);
 }
@@ -40,12 +40,6 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-}
-
-.form-group label {
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 0.9rem;
-  font-weight: 500;
 }
 
 .form-group input {
@@ -81,8 +75,6 @@
 }
 
 .button-group {
-  display: flex;
-  gap: 1rem;
   margin-top: 0.5rem;
 }
 
@@ -95,25 +87,12 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-}
-
-.home-button {
-  padding: 0.875rem 1.5rem;
-  border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.signup-button {
   background: linear-gradient(145deg, #667eea, #764ba2);
   color: white;
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
-.signup-button:hover {
+.signup-button:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
 }
@@ -133,93 +112,41 @@
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
-.home-button {
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.home-button:hover {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: rgba(255, 255, 255, 0.3);
-}
-
-.home-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
 .login-link-container {
   text-align: center;
   margin-top: 1rem;
   font-size: 0.9rem;
 }
 
-.login-link-container > span {
+.login-link-container p {
+  margin: 0;
   color: rgba(255, 255, 255, 0.7);
 }
 
 .login-link {
   color: #4fc3f7 !important;
   text-decoration: none;
-  font-weight: 400;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: transparent !important;
-}
-
-.login-link i {
-  font-size: 0.85rem;
-  margin-left: 0.3rem;
-  color: inherit;
+  font-weight: 600;
 }
 
 .login-link:hover {
   color: #29b6f6 !important;
 }
 
-.home-link-container {
-  text-align: center;
-  margin-top: 1rem;
-  font-size: 0.9rem;
+.signup-mobile-home-link {
+  display: none;
 }
 
-.home-link {
-  color: #4fc3f7 !important;
-  text-decoration: none;
-  font-weight: 400;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: transparent !important;
-}
-
-.home-link i {
-  font-size: 0.85rem;
-  margin-right: 0.3rem;
-  color: inherit;
-}
-
-.home-link:hover {
-  color: #29b6f6 !important;
-}
-
-/* 라이트 모드일 때 스타일 */
 @media (prefers-color-scheme: light) {
   .signup-card {
     background: rgba(255, 255, 255, 0.9);
-    box-shadow: 
+    box-shadow:
       0 8px 32px rgba(0, 0, 0, 0.1),
       0 0 0 1px rgba(0, 0, 0, 0.1);
   }
 
   .signup-card h1 {
     color: #1a1a1a;
-  }
-
-  .form-group label {
-    color: rgba(26, 26, 26, 0.9);
   }
 
   .form-group input {
@@ -243,61 +170,139 @@
     box-shadow: 0 4px 12px rgba(79, 195, 247, 0.4);
   }
 
-  .home-button {
-    background: rgba(0, 0, 0, 0.05);
-    color: #1a1a1a;
-    border-color: rgba(0, 0, 0, 0.2);
-  }
-
-  .home-button:hover {
-    background: rgba(0, 0, 0, 0.1);
-  }
-
-  .login-link-container > span {
+  .login-link-container p {
     color: rgba(26, 26, 26, 0.7);
   }
+}
 
-  .login-link {
-    color: #4fc3f7 !important;
-    background: transparent !important;
+@media (max-width: 768px) {
+  .signup-page-gnb {
+    display: none;
   }
 
-  .login-link:hover {
-    color: #29b6f6 !important;
+  .signup-mobile-home-link {
+    position: fixed;
+    top: 18px;
+    left: 16px;
+    z-index: 1100;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: 0.55rem 0.9rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(26, 26, 26, 0.82);
+    backdrop-filter: blur(10px);
+    color: rgba(255, 255, 255, 0.92);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1;
   }
 
-  .home-link {
-    color: #4fc3f7 !important;
-    background: transparent !important;
+  .signup-mobile-home-link:hover {
+    color: white;
+    background: rgba(36, 36, 36, 0.92);
   }
 
-  .home-link:hover {
-    color: #29b6f6 !important;
+  .signup-mobile-home-link::before {
+    content: '<';
+    margin-right: 0.4rem;
+    font-size: 0.95rem;
+  }
+
+  .signup-container {
+    min-height: 100vh;
+    align-items: flex-start;
+    padding: 88px 24px 72px;
+  }
+
+  .signup-card {
+    width: 100%;
+    max-width: 560px;
+    padding: 2.25rem 2rem;
+    border-radius: 12px;
+  }
+
+  .signup-card h1 {
+    margin-bottom: 2rem;
+    font-size: 1.75rem;
+  }
+
+  .signup-form {
+    gap: 1.25rem;
   }
 }
 
-/* 다크 모드일 때 스타일 */
-@media (prefers-color-scheme: dark) {
-  .login-link-container > span {
-    color: rgba(255, 255, 255, 0.7);
+@media (max-width: 480px) {
+  .signup-container {
+    padding: 88px 20px 48px;
+  }
+
+  .signup-card {
+    width: 100%;
+    max-width: none;
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    backdrop-filter: none;
+    box-shadow: none;
+  }
+
+  .signup-card h1 {
+    display: none;
+  }
+
+  .signup-form {
+    gap: 1rem;
+  }
+
+  .form-group input {
+    border: none;
+    border-radius: 10px;
+    background: #f8f8f8;
+    color: #333;
+    padding: 1rem 1.25rem;
+    font-size: 1rem;
+    box-shadow: none;
+  }
+
+  .form-group input::placeholder {
+    color: #999;
+  }
+
+  .form-group input:focus {
+    border-color: transparent;
+    background: #eee;
+    box-shadow: none;
+  }
+
+  .signup-button {
+    margin-top: 0.5rem;
+    min-height: 56px;
+    border-radius: 10px;
+    background: #2ecc71;
+    box-shadow: none;
+    font-size: 1.05rem;
+  }
+
+  .signup-button:hover:not(:disabled) {
+    transform: none;
+    background: #27ae60;
+    box-shadow: none;
+  }
+
+  .login-link-container {
+    margin-top: 0.75rem;
+    font-size: 0.9rem;
+  }
+
+  .login-link-container p {
+    color: #666;
   }
 
   .login-link {
-    color: #4fc3f7 !important;
-    background: transparent !important;
-  }
-
-  .login-link:hover {
-    color: #29b6f6 !important;
-  }
-
-  .home-link {
-    color: #4fc3f7 !important;
-    background: transparent !important;
-  }
-
-  .home-link:hover {
-    color: #29b6f6 !important;
+    color: #2ecc71 !important;
   }
 }
-

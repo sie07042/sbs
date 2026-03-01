@@ -1,439 +1,661 @@
-/* 로그인 페이지 전체 컨테이너 */
 .login-container {
-  /* 최소 높이를 뷰포트 전체 높이로 설정 */
   min-height: 100vh;
-  /* flexbox 레이아웃 사용 */
   display: flex;
-  /* 세로 및 가로 중앙 정렬 */
   justify-content: center;
   align-items: center;
-  /* 전체 너비 사용 */
   width: 100%;
-  /* 상하좌우 여백 (위 120px, 좌우 20px, 아래 100px) - GNB와 Footer 공간 확보 */
   padding: 120px 20px 100px;
-  /* 투명한 배경 */
   background: transparent;
-  /* box-sizing을 border-box로 설정하여 padding이 전체 크기에 포함되도록 함 */
   box-sizing: border-box;
 }
 
-/* 로그인 카드 */
 .login-card {
-  /* 어두운 회색 배경에 80% 불투명도 (다크 모드) */
   background: rgba(26, 26, 26, 0.8);
-  /* 뒷배경을 10px만큼 흐리게 처리 (글래스모피즘 효과) */
   backdrop-filter: blur(10px);
-  /* 모서리를 16px만큼 둥글게 */
   border-radius: 16px;
-  /* 내부 여백 */
   padding: 3rem;
-  /* 카드 너비 */
   width: 600px;
   max-width: 600px;
-  /* box-sizing을 border-box로 설정하여 padding이 전체 크기에 포함되도록 함 */
   box-sizing: border-box;
-  /* 그림자 효과: 큰 그림자 + 얇은 테두리 효과 */
   box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.3),
     0 0 0 1px rgba(255, 255, 255, 0.1);
 }
 
-/* 로그인 제목 */
 .login-card h1 {
-  /* 완전히 불투명한 흰색 텍스트 */
   color: white;
-  /* 텍스트 중앙 정렬 */
   text-align: center;
-  /* 하단 여백 */
   margin-bottom: 2rem;
-  /* 폰트 크기 */
   font-size: 2rem;
-  /* 폰트 굵기 bold */
   font-weight: bold;
 }
 
-/* 로그인 폼 */
 .login-form {
-  /* flexbox를 세로 방향으로 사용 */
   display: flex;
   flex-direction: column;
-  /* 폼 요소들 사이에 1.5rem 간격 */
   gap: 1.5rem;
 }
 
-/* 폼 그룹 (각 입력 필드를 감싸는 컨테이너) */
 .form-group {
-  /* flexbox를 세로 방향으로 사용 */
   display: flex;
   flex-direction: column;
-  /* 폼 그룹 내부 요소들 사이에 0.5rem 간격 */
   gap: 0.5rem;
 }
 
-/* 입력 필드 기본 스타일 */
 .form-group input {
-  /* 내부 여백 */
   padding: 0.75rem 1rem;
-  /* 흰색에 20% 불투명도의 테두리 */
   border: 1px solid rgba(255, 255, 255, 0.2);
-  /* 모서리를 8px만큼 둥글게 */
   border-radius: 8px;
-  /* 흰색에 5% 불투명도의 배경 */
   background: rgba(255, 255, 255, 0.05);
-  /* 완전히 불투명한 흰색 텍스트 */
   color: white;
-  /* 폰트 크기 */
   font-size: 1rem;
-  /* 모든 속성 변화를 0.3초 동안 부드럽게 전환 */
   transition: all 0.3s ease;
 }
 
-/* 입력 필드 placeholder 스타일 */
 .form-group input::placeholder {
-  /* 흰색에 40% 불투명도의 텍스트 */
   color: rgba(255, 255, 255, 0.4);
 }
 
-/* 입력 필드에 포커스가 있을 때 */
 .form-group input:focus {
-  /* 기본 outline 제거 */
   outline: none;
-  /* 파란 보라색에 80% 불투명도의 테두리 */
   border-color: rgba(102, 126, 234, 0.8);
-  /* 흰색에 8% 불투명도의 배경 (포커스 시 약간 밝게) */
   background: rgba(255, 255, 255, 0.08);
-  /* 파란 보라색 포커스 링 효과 */
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
 }
 
-/* 에러가 있는 입력 필드 */
 .form-group input.error {
-  /* 빨간색에 80% 불투명도의 테두리 */
   border-color: rgba(255, 82, 82, 0.8);
-  /* 빨간색에 5% 불투명도의 배경 */
   background: rgba(255, 82, 82, 0.05);
 }
 
-/* 에러 메시지 스타일 */
 .error-message {
-  /* 밝은 빨간색 텍스트 */
   color: #ff5252;
-  /* 작은 폰트 크기 */
   font-size: 0.85rem;
-  /* 위쪽 여백 */
   margin-top: 0.25rem;
 }
 
-/* 버튼 그룹 */
 .button-group {
-  /* 위쪽 여백 */
   margin-top: 0.5rem;
 }
 
-/* 로그인 버튼 */
 .login-button {
-  /* 전체 너비 사용 */
   width: 100%;
-  /* 내부 여백 */
   padding: 0.875rem 1.5rem;
-  /* 테두리 제거 */
   border: none;
-  /* 모서리를 8px만큼 둥글게 */
   border-radius: 8px;
-  /* 폰트 크기 */
   font-size: 1rem;
-  /* 폰트 굵기 600 (semibold) */
   font-weight: 600;
-  /* 마우스 커서를 포인터로 변경 */
   cursor: pointer;
-  /* 모든 속성 변화를 0.3초 동안 부드럽게 전환 */
   transition: all 0.3s ease;
-  /* 파란 보라색 그라데이션 배경 */
   background: linear-gradient(145deg, #667eea, #764ba2);
-  /* 완전히 불투명한 흰색 텍스트 */
   color: white;
-  /* 파란 보라색 그림자 효과 */
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
-/* 로그인 버튼에 마우스를 올렸을 때 */
 .login-button:hover:not(:disabled) {
-  /* 위로 살짝 이동하는 효과 */
   transform: translateY(-2px);
-  /* 그림자를 더 크고 진하게 */
   box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
 }
 
-/* 로그인 버튼을 클릭했을 때 */
 .login-button:active {
-  /* 원래 위치로 돌아감 */
   transform: translateY(0);
 }
 
-/* 로그인 버튼이 비활성화되었을 때 */
 .login-button:disabled {
-  /* 불투명도 60%로 설정 */
   opacity: 0.6;
-  /* 마우스 커서를 금지 모양으로 변경 */
   cursor: not-allowed;
-  /* transform 효과 제거 */
   transform: none;
 }
 
-/* 로그인 버튼이 비활성화 상태에서 마우스를 올렸을 때 */
 .login-button:disabled:hover {
-  /* transform 효과 제거 */
   transform: none;
-  /* 기본 그림자 유지 */
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
-/* 구분선 (또는) */
 .divider {
-  /* 위아래 여백 */
   margin: 1.5rem 0;
-  /* flexbox 레이아웃 */
   display: flex;
-  /* 가로 중앙 정렬 */
   align-items: center;
-  /* 텍스트 중앙 정렬 */
   text-align: center;
 }
 
 .divider::before,
 .divider::after {
-  /* flex로 남은 공간 균등 분배 */
   content: '';
   flex: 1;
-  /* 흰색에 20% 불투명도의 선 */
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .divider span {
-  /* 좌우 여백 */
   padding: 0 1rem;
-  /* 흰색에 50% 불투명도의 텍스트 */
   color: rgba(255, 255, 255, 0.5);
-  /* 작은 폰트 크기 */
   font-size: 0.9rem;
 }
 
-/* 소셜 로그인 그룹 */
 .social-login-group {
-  /* 아래쪽 여백 */
   margin-bottom: 1rem;
 }
 
-/* 카카오 로그인 버튼 */
 .kakao-login-button {
-  /* 전체 너비 사용 */
   width: 100%;
-  /* 내부 여백 */
   padding: 0.875rem 1.5rem;
-  /* 테두리 제거 */
   border: none;
-  /* 모서리를 8px만큼 둥글게 */
   border-radius: 8px;
-  /* 폰트 크기 */
   font-size: 1rem;
-  /* 폰트 굵기 600 (semibold) */
   font-weight: 600;
-  /* 마우스 커서를 포인터로 변경 */
   cursor: pointer;
-  /* 모든 속성 변화를 0.3초 동안 부드럽게 전환 */
   transition: all 0.3s ease;
-  /* 카카오 노란색 배경 */
-  background-color: #FEE500;
-  /* 카카오 검은색 텍스트 */
-  color: #000000;
-  /* 그림자 효과 */
+  background-color: #fee500;
+  color: #000;
   box-shadow: 0 4px 12px rgba(254, 229, 0, 0.3);
-  /* flexbox 레이아웃 (아이콘과 텍스트 정렬용) */
   display: flex;
-  /* 가로 중앙 정렬 */
   justify-content: center;
-  /* 세로 중앙 정렬 */
   align-items: center;
-  /* 아이콘과 텍스트 사이 간격 */
   gap: 0.5rem;
 }
 
-/* 카카오 아이콘 */
 .kakao-icon {
-  /* 세로 정렬 */
   vertical-align: middle;
 }
 
-/* 카카오 로그인 버튼에 마우스를 올렸을 때 */
 .kakao-login-button:hover:not(:disabled) {
-  /* 약간 어두운 카카오 노란색 */
-  background-color: #FDD835;
-  /* 위로 살짝 이동하는 효과 */
+  background-color: #fdd835;
   transform: translateY(-2px);
-  /* 그림자를 더 크고 진하게 */
   box-shadow: 0 6px 16px rgba(254, 229, 0, 0.4);
 }
 
-/* 카카오 로그인 버튼을 클릭했을 때 */
 .kakao-login-button:active {
-  /* 원래 위치로 돌아감 */
   transform: translateY(0);
 }
 
-/* 카카오 로그인 버튼이 비활성화되었을 때 */
 .kakao-login-button:disabled {
-  /* 불투명도 60%로 설정 */
   opacity: 0.6;
-  /* 마우스 커서를 금지 모양으로 변경 */
   cursor: not-allowed;
-  /* transform 효과 제거 */
   transform: none;
 }
 
-/* 회원가입 링크 영역 */
 .signup-link {
-  /* 텍스트 중앙 정렬 */
   text-align: center;
-  /* 위쪽 여백 */
   margin-top: 1rem;
-  /* 폰트 크기 */
   font-size: 0.9rem;
 }
 
-/* 회원가입 링크 텍스트 */
 .signup-link > span {
-  /* 흰색에 70% 불투명도의 텍스트 */
   color: rgba(255, 255, 255, 0.7);
 }
 
-/* 회원가입 링크 */
 .signup-link a {
-  /* 하늘색 텍스트 */
   color: #4fc3f7 !important;
-  /* 링크 밑줄 제거 */
   text-decoration: none;
-  /* 폰트 굵기 400 (regular) */
   font-weight: 400;
-  /* inline-flex 레이아웃 사용 */
   display: inline-flex;
-  /* 자식 요소들을 세로 중앙 정렬 */
   align-items: center;
-  /* 자식 요소들 사이에 0.5rem 간격 */
   gap: 0.5rem;
-  /* 투명한 배경 */
   background: transparent !important;
 }
 
-/* 회원가입 링크에 마우스를 올렸을 때 */
 .signup-link a:hover {
-  /* 더 진한 하늘색 텍스트 */
   color: #29b6f6 !important;
 }
 
-/* 라이트 모드일 때 스타일 */
+.login-mobile-home-link {
+  display: none;
+}
+
 @media (prefers-color-scheme: light) {
-  /* 로그인 카드 배경을 밝게 */
   .login-card {
-    /* 흰색에 90% 불투명도의 배경 */
     background: rgba(255, 255, 255, 0.9);
-    /* 그림자 효과: 큰 그림자 + 얇은 테두리 효과 */
     box-shadow:
       0 8px 32px rgba(0, 0, 0, 0.1),
       0 0 0 1px rgba(0, 0, 0, 0.1);
   }
 
-  /* 제목 텍스트를 어둡게 */
   .login-card h1 {
-    /* 어두운 회색 텍스트 */
     color: #1a1a1a;
   }
 
-  /* 입력 필드 배경을 밝게 */
   .form-group input {
-    /* 검은색에 20% 불투명도의 테두리 */
     border-color: rgba(0, 0, 0, 0.2);
-    /* 흰색에 80% 불투명도의 배경 */
     background: rgba(255, 255, 255, 0.8);
-    /* 어두운 회색 텍스트 */
     color: #1a1a1a;
   }
 
-  /* 입력 필드 placeholder를 어둡게 */
   .form-group input::placeholder {
-    /* 어두운 회색에 40% 불투명도의 텍스트 */
     color: rgba(26, 26, 26, 0.4);
   }
 
-  /* 입력 필드 포커스 시 */
   .form-group input:focus {
-    /* 하늘색에 80% 불투명도의 테두리 */
     border-color: rgba(79, 195, 247, 0.8);
-    /* 흰색에 95% 불투명도의 배경 */
     background: rgba(255, 255, 255, 0.95);
-    /* 하늘색 포커스 링 효과 */
     box-shadow: 0 0 0 3px rgba(79, 195, 247, 0.2);
   }
 
-  /* 로그인 버튼 배경을 하늘색 그라데이션으로 */
   .login-button {
-    /* 하늘색 그라데이션 배경 */
     background: linear-gradient(145deg, #4fc3f7, #29b6f6);
-    /* 하늘색 그림자 */
     box-shadow: 0 4px 12px rgba(79, 195, 247, 0.4);
   }
 
-  /* 구분선 스타일 */
   .divider::before,
   .divider::after {
-    /* 검은색에 20% 불투명도의 선 */
     border-bottom-color: rgba(0, 0, 0, 0.2);
   }
 
   .divider span {
-    /* 검은색에 50% 불투명도의 텍스트 */
     color: rgba(0, 0, 0, 0.5);
   }
 
-  /* 회원가입 링크 텍스트를 어둡게 */
   .signup-link > span {
-    /* 어두운 회색에 70% 불투명도의 텍스트 */
     color: rgba(26, 26, 26, 0.7);
   }
 
-  /* 회원가입 링크 */
   .signup-link a {
-    /* 하늘색 텍스트 */
     color: #4fc3f7 !important;
-    /* 투명한 배경 */
     background: transparent !important;
   }
 
-  /* 회원가입 링크 호버 시 */
   .signup-link a:hover {
-    /* 더 진한 하늘색 텍스트 */
     color: #29b6f6 !important;
   }
 }
 
-/* 다크 모드일 때 스타일 */
 @media (prefers-color-scheme: dark) {
-  /* 회원가입 링크 텍스트 */
   .signup-link > span {
-    /* 흰색에 70% 불투명도의 텍스트 */
     color: rgba(255, 255, 255, 0.7);
   }
 
-  /* 회원가입 링크 */
   .signup-link a {
-    /* 하늘색 텍스트 */
     color: #4fc3f7 !important;
-    /* 투명한 배경 */
     background: transparent !important;
   }
 
-  /* 회원가입 링크 호버 시 */
   .signup-link a:hover {
-    /* 더 진한 하늘색 텍스트 */
     color: #29b6f6 !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .login-container {
+    min-height: 100vh;
+    align-items: flex-start;
+    padding: 112px 24px 72px;
+  }
+
+  .login-card {
+    width: 100%;
+    max-width: 560px;
+    padding: 2.25rem 2rem;
+    border-radius: 12px;
+  }
+
+  .login-card h1 {
+    margin-bottom: 2rem;
+    font-size: 1.75rem;
+  }
+
+  .login-form {
+    gap: 1.25rem;
+  }
+
+  .divider {
+    margin: 1.25rem 0;
+  }
+}
+
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 120px 20px 100px;
+  background: transparent;
+  box-sizing: border-box;
+}
+
+.login-card {
+  background: rgba(26, 26, 26, 0.8);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 3rem;
+  width: 600px;
+  max-width: 600px;
+  box-sizing: border-box;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.login-card h1 {
+  color: white;
+  text-align: center;
+  margin-bottom: 2rem;
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group input {
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.form-group input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: rgba(102, 126, 234, 0.8);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+.form-group input.error {
+  border-color: rgba(255, 82, 82, 0.8);
+  background: rgba(255, 82, 82, 0.05);
+}
+
+.error-message {
+  color: #ff5252;
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+}
+
+.button-group {
+  margin-top: 0.5rem;
+}
+
+.login-button {
+  width: 100%;
+  padding: 0.875rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: linear-gradient(145deg, #667eea, #764ba2);
+  color: white;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.login-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
+}
+
+.login-button:active {
+  transform: translateY(0);
+}
+
+.login-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.login-button:disabled:hover {
+  transform: none;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.divider {
+  margin: 1.5rem 0;
+  display: flex;
+  align-items: center;
+  text-align: center;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.divider span {
+  padding: 0 1rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.9rem;
+}
+
+.social-login-group {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.kakao-login-button {
+  padding: 0.875rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  background-color: #fee500;
+  color: #000;
+  box-shadow: 0 4px 12px rgba(254, 229, 0, 0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 180px;
+  transition: background-color 0.3s ease;
+}
+
+.kakao-login-button:hover:not(:disabled) {
+  background-color: #fdd835;
+}
+
+.kakao-login-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.kakao-icon {
+  vertical-align: middle;
+}
+
+.signup-link {
+  text-align: center;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
+
+.signup-link p {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.signup-link a {
+  color: #4fc3f7 !important;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.signup-link a:hover {
+  color: #29b6f6 !important;
+}
+
+/* -------- 모바일 반응형 -------- */
+
+@media (max-width: 768px) {
+  .login-container {
+    padding: 100px 24px 72px;
+    align-items: flex-start;
+  }
+
+  .login-card {
+    width: 100%;
+    max-width: 560px;
+    padding: 2.5rem 2rem;
+    border-radius: 12px;
+  }
+
+  .login-card h1 {
+    font-size: 1.75rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .login-form {
+    gap: 1.25rem;
+  }
+
+  .divider {
+    margin: 1rem 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-container {
+    padding: 120px 20px 48px;
+    align-items: flex-start;
+  }
+
+  .login-card {
+    width: 100%;
+    max-width: none;
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    backdrop-filter: none;
+    box-shadow: none;
+  }
+
+  .login-card h1 {
+    display: none; /* 이미지처럼 타이틀 숨기기 */
+  }
+
+  .login-form {
+    gap: 1rem;
+  }
+
+  .form-group {
+    gap: 0.5rem;
+  }
+
+  .form-group input {
+    border: none;
+    border-radius: 10px;
+    background: #f8f8f8;
+    color: #333;
+    padding: 1rem 1.25rem;
+    font-size: 1rem;
+    box-shadow: none;
+  }
+
+  .form-group input::placeholder {
+    color: #999;
+  }
+
+  .form-group input:focus {
+    border-color: transparent;
+    background: #eee;
+    box-shadow: none;
+  }
+
+  .login-button {
+    margin-top: 0.5rem;
+    border: none;
+    border-radius: 10px;
+    background: #2ecc71;
+    color: white;
+    box-shadow: none;
+    font-size: 1.1rem;
+    min-height: 56px;
+    cursor: pointer;
+  }
+
+  .login-button:hover:not(:disabled) {
+    background: #27ae60;
+  }
+
+  .divider {
+    display: none;
+  }
+
+  .social-login-group {
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .kakao-login-button {
+    width: 100%;
+    min-height: 56px;
+    border-radius: 10px;
+    font-size: 1rem;
+    padding: 0 1.25rem;
+    box-shadow: none;
+  }
+
+  .signup-link {
+    font-size: 0.9rem;
+    margin-top: 1rem;
+    color: #666;
+  }
+
+  .signup-link a {
+    color: #2ecc71 !important;
+  }
+
+  
+}
+
+@media (max-width: 768px) {
+  .login-page-gnb {
+    display: none;
+  }
+
+  .login-mobile-home-link {
+    position: fixed;
+    top: 18px;
+    left: 16px;
+    z-index: 1100;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: 0.55rem 0.9rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(26, 26, 26, 0.82);
+    backdrop-filter: blur(10px);
+    color: rgba(255, 255, 255, 0.92);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1;
+  }
+
+  .login-mobile-home-link:hover {
+    color: white;
+    background: rgba(36, 36, 36, 0.92);
+  }
+
+  .login-mobile-home-link::before {
+    content: '<';
+    margin-right: 0.4rem;
+    font-size: 0.95rem;
+  }
+
+  .login-container {
+    padding-top: 88px;
   }
 }
