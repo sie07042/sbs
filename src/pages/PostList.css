@@ -102,6 +102,7 @@
   display: block;
   transition: transform 0.2s, box-shadow 0.2s;
   border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
 }
 
 .post-card:hover {
@@ -207,6 +208,30 @@
 .post-card-stat {
   color: rgba(255, 255, 255, 0.4);
   font-size: 0.85rem;
+}
+
+.post-card-like-button {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.post-card-like-button:hover:not(:disabled) {
+  color: #ff7b9c;
+  transform: translateY(-1px);
+}
+
+.post-card-like-button.liked {
+  color: #ff7b9c;
+}
+
+.post-card-like-button:disabled {
+  opacity: 0.6;
+  cursor: wait;
 }
 
 /* ==========================================

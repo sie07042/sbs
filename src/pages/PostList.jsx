@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
 
 import GNB from '../components/Gnb';
 import Footer from '../components/Footer';
 import PostCard from '../components/PostCard';
+import { API_CONFIG } from '../config';
 import { useAuth } from '../hooks/useAuth';
 import { usePosts } from '../hooks/usePosts';
 import './PostList.css';
@@ -21,15 +23,56 @@ function PostList() {
 
   // 탭 상태: 'all' (전체 피드) 또는 'mine' (내 게시글)
   const [activeTab, setActiveTab] = useState('all');
+  const [likeLoadingIds, setLikeLoadingIds] = useState([]);
 
   // 게시글 목록 조회 (탭에 따라 다른 API 호출)
-  const { posts, isLoading, error, fetchPosts } = usePosts(accessToken, {
+  const { posts, isLoading, error, fetchPosts, updatePost } = usePosts(accessToken, {
     myPostsOnly: activeTab === 'mine'
   });
 
   // 탭 변경 핸들러
   const handleTabChange = (tab) => {
     setActiveTab(tab);
+  };
+
+  const handleToggleLike = async (postId, currentlyLiked) => {
+    if (!isAuthenticated || !accessToken) {
+      alert('Login is required to like this post.');
+      return;
+    }
+
+    if (likeLoadingIds.includes(postId)) {
+      return;
+    }
+
+    setLikeLoadingIds(prev => [...prev, postId]);
+
+    try {
+      const url = `${API_CONFIG.baseUrl}${API_CONFIG.endpoints.posts}/${postId}/like`;
+      const response = await axios({
+        url,
+        method: currentlyLiked ? 'delete' : 'post',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        withCredentials: true,
+      });
+
+      const likeData = response.data?.data;
+
+      updatePost(postId, (post) => ({
+        ...post,
+        liked: typeof likeData?.liked === 'boolean' ? likeData.liked : !currentlyLiked,
+        likeCount: typeof likeData?.likeCount === 'number'
+          ? likeData.likeCount
+          : Math.max(0, (post.likeCount || 0) + (currentlyLiked ? -1 : 1)),
+      }));
+    } catch (err) {
+      console.error('Like toggle failed:', err);
+      alert('Failed to update like.');
+    } finally {
+      setLikeLoadingIds(prev => prev.filter(id => id !== postId));
+    }
   };
 
   return (
@@ -86,7 +129,13 @@ function PostList() {
             </div>
           ) : (
             posts.map(post => (
-              <PostCard key={post.id} post={post} />
+              <PostCard
+                key={post.id}
+                post={post}
+                isAuthenticated={isAuthenticated}
+                isLiking={likeLoadingIds.includes(post.id)}
+                onToggleLike={handleToggleLike}
+              />
             ))
           )}
         </div>

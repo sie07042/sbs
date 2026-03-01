@@ -109,6 +109,14 @@ export function usePosts(accessToken, { myPostsOnly = false } = {}) {
     }
   };
 
+  const updatePost = (postId, updater) => {
+    setPosts(prev => prev.map(post => (
+      post.id === postId
+        ? (typeof updater === 'function' ? updater(post) : { ...post, ...updater })
+        : post
+    )));
+  };
+
   // ==========================================
   // 반환값
   // ==========================================
@@ -118,5 +126,6 @@ export function usePosts(accessToken, { myPostsOnly = false } = {}) {
     error,
     fetchPosts,  // 목록 새로고침
     deletePost,
+    updatePost,
   };
 }
