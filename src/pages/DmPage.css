@@ -27,6 +27,16 @@
   border-bottom: 1px solid #e5e7eb;
 }
 
+.dm-room-panel-header h2 {
+  margin: 0;
+}
+
+.dm-room-panel-subtitle {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: #6b7280;
+}
+
 .dm-room-list {
   flex: 1;
   overflow-y: auto;

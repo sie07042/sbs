@@ -89,6 +89,21 @@
   gap: 0.5rem;
 }
 
+.message-button {
+  background: rgba(102, 126, 234, 0.22);
+  color: #dce5ff;
+  border: 1px solid rgba(102, 126, 234, 0.36);
+  padding: 0.4rem 1rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.message-button:hover {
+  background: rgba(102, 126, 234, 0.36);
+}
+
 .delete-button {
   background: rgba(255, 59, 48, 0.2);
   color: #ff6b6b;

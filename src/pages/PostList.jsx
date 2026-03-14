@@ -19,7 +19,7 @@ import './PostList.css';
  * - 로그인한 사용자만 게시글 작성 가능
  */
 function PostList() {
-  const { isAuthenticated, accessToken } = useAuth();
+  const { user, isAuthenticated, accessToken } = useAuth();
 
   // 탭 상태: 'all' (전체 피드) 또는 'mine' (내 게시글)
   const [activeTab, setActiveTab] = useState('all');
@@ -133,6 +133,7 @@ function PostList() {
                 key={post.id}
                 post={post}
                 isAuthenticated={isAuthenticated}
+                currentUserId={user?.id}
                 isLiking={likeLoadingIds.includes(post.id)}
                 onToggleLike={handleToggleLike}
               />

@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 
-function PostCard({ post, isAuthenticated, isLiking, onToggleLike }) {
+function PostCard({ post, isAuthenticated, currentUserId, isLiking, onToggleLike }) {
   const navigate = useNavigate();
 
   const formatTime = (dateString) => {
@@ -26,6 +26,8 @@ function PostCard({ post, isAuthenticated, isLiking, onToggleLike }) {
 
   const authorName = post.author?.name || post.userName || 'Unknown';
   const authorImage = post.author?.profileImage || post.userProfileImage || null;
+  const authorId = post.author?.id || post.userId;
+  const canStartDm = isAuthenticated && authorId && String(authorId) !== String(currentUserId);
 
   const handleMoveToDetail = () => {
     navigate(`/posts/${post.id}`);
@@ -38,6 +40,13 @@ function PostCard({ post, isAuthenticated, isLiking, onToggleLike }) {
     if (onToggleLike) {
       onToggleLike(post.id, !!post.liked);
     }
+  };
+
+  const handleStartDm = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    navigate(`/dm?userId=${authorId}&name=${encodeURIComponent(authorName)}`);
   };
 
   return (
@@ -86,16 +95,27 @@ function PostCard({ post, isAuthenticated, isLiking, onToggleLike }) {
       )}
 
       <div className="post-card-footer">
-        <button
-          type="button"
-          className={`post-card-like-button ${post.liked ? 'liked' : ''}`}
-          onClick={handleLikeClick}
-          disabled={isLiking}
-          aria-pressed={!!post.liked}
-          aria-label={isAuthenticated ? 'Toggle like' : 'Login required to like'}
-        >
-          {`Like ${post.likeCount || 0}`}
-        </button>
+        <div className="post-card-actions">
+          <button
+            type="button"
+            className={`post-card-like-button ${post.liked ? 'liked' : ''}`}
+            onClick={handleLikeClick}
+            disabled={isLiking}
+            aria-pressed={!!post.liked}
+            aria-label={isAuthenticated ? 'Toggle like' : 'Login required to like'}
+          >
+            {`Like ${post.likeCount || 0}`}
+          </button>
+          {canStartDm && (
+            <button
+              type="button"
+              className="post-card-message-button"
+              onClick={handleStartDm}
+            >
+              Message
+            </button>
+          )}
+        </div>
         <span className="post-card-stat">{`Comments ${post.commentCount || 0}`}</span>
         <span className="post-card-stat">{`Views ${post.viewCount || 0}`}</span>
       </div>

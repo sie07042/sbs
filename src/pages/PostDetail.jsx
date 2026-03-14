@@ -131,12 +131,23 @@ function PostDetail() {
 
   const authorName = post?.author?.name || post?.userName || 'Unknown';
   const authorImage = post?.author?.profileImage || post?.userProfileImage || null;
+  const authorId = post?.author?.id || post?.userId;
 
   const isOwner = user && post && (
     user.id === post.userId ||
     user.id === post.author?.id ||
     user.email === post.author?.email
   );
+
+  const canStartDm = isAuthenticated && authorId && !isOwner;
+
+  const handleStartDm = () => {
+    if (!authorId) {
+      return;
+    }
+
+    navigate(`/dm?userId=${authorId}&name=${encodeURIComponent(authorName)}`);
+  };
 
   return (
     <>
@@ -171,11 +182,19 @@ function PostDetail() {
                 </div>
               </div>
 
-              {isOwner && (
+              {(isOwner || canStartDm) && (
                 <div className="post-detail-actions">
+                  {canStartDm && (
+                    <button onClick={handleStartDm} className="message-button" type="button">
+                      Message
+                    </button>
+                  )}
+                  
+                  {isOwner && (
                   <button onClick={handleDelete} className="delete-button" type="button">
                     Delete
                   </button>
+                  )}
                 </div>
               )}
             </div>

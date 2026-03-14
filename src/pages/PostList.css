@@ -201,8 +201,16 @@
 .post-card-footer {
   display: flex;
   gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
   padding-top: 0.5rem;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.post-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
 }
 
 .post-card-stat {
@@ -232,6 +240,22 @@
 .post-card-like-button:disabled {
   opacity: 0.6;
   cursor: wait;
+}
+
+.post-card-message-button {
+  border: 1px solid rgba(102, 126, 234, 0.4);
+  background: rgba(102, 126, 234, 0.14);
+  color: #dce5ff;
+  padding: 0.28rem 0.72rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.post-card-message-button:hover {
+  background: rgba(102, 126, 234, 0.28);
+  transform: translateY(-1px);
 }
 
 /* ==========================================

@@ -1,10 +1,15 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import axios from 'axios'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import GNB from '../components/Gnb'
 import Footer from '../components/Footer'
+import { useAuth } from '../hooks/useAuth'
 import './DmPage.css'
 
 function DmPage() {
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const { user, isAuthenticated, isLoading } = useAuth()
   const [rooms, setRooms] = useState([])
   const [selectedRoom, setSelectedRoom] = useState(null)
   const [messages, setMessages] = useState([])
@@ -12,9 +17,24 @@ function DmPage() {
   const [isRoomsLoading, setIsRoomsLoading] = useState(false)
   const [isMessagesLoading, setIsMessagesLoading] = useState(false)
   const [isSending, setIsSending] = useState(false)
+  const [isStartingRoom, setIsStartingRoom] = useState(false)
   const messageEndRef = useRef(null)
+  const requestedUserId = searchParams.get('userId')
+  const requestedUserName = searchParams.get('name')
 
-  const fetchRooms = async () => {
+  const findRoomByPeerUserId = useCallback((roomList, peerUserId) => {
+    if (!peerUserId) return null
+
+    return (
+      roomList.find(
+        (room) =>
+          String(room.peerUserId || room.peer?.id || room.userId || '') ===
+          String(peerUserId)
+      ) || null
+    )
+  }, [])
+
+  const fetchRooms = useCallback(async (options = {}) => {
     try {
       setIsRoomsLoading(true)
 
@@ -27,19 +47,21 @@ function DmPage() {
         setRooms(roomList)
 
         if (roomList.length > 0) {
+          const preferredRoom =
+            roomList.find((room) => room.roomId === options.preferredRoomId) ||
+            findRoomByPeerUserId(roomList, options.preferredPeerUserId)
+
           const stillExists = roomList.find(
             (room) => room.roomId === selectedRoom?.roomId
           )
 
-          if (stillExists) {
-            setSelectedRoom(stillExists)
-          } else if (!selectedRoom) {
-            setSelectedRoom(roomList[0])
-          }
+          setSelectedRoom(preferredRoom || stillExists || roomList[0])
         } else {
           setSelectedRoom(null)
           setMessages([])
         }
+
+        return roomList
       } else {
         alert(response.data.message)
       }
@@ -49,9 +71,23 @@ function DmPage() {
     } finally {
       setIsRoomsLoading(false)
     }
-  }
 
-  const fetchMessages = async (roomId) => {
+    return []
+  }, [findRoomByPeerUserId, selectedRoom?.roomId])
+
+  const markAsRead = useCallback(async (roomId, lastReadMessageId) => {
+    try {
+      await axios.post(
+        `/api/dm/rooms/${roomId}/read`,
+        { lastReadMessageId },
+        { withCredentials: true }
+      )
+    } catch (error) {
+      console.error('Mark as read error:', error)
+    }
+  }, [])
+
+  const fetchMessages = useCallback(async (roomId) => {
     if (!roomId) return
 
     try {
@@ -84,19 +120,7 @@ function DmPage() {
     } finally {
       setIsMessagesLoading(false)
     }
-  }
-
-  const markAsRead = async (roomId, lastReadMessageId) => {
-    try {
-      await axios.post(
-        `/api/dm/rooms/${roomId}/read`,
-        { lastReadMessageId },
-        { withCredentials: true }
-      )
-    } catch (error) {
-      console.error('Mark as read error:', error)
-    }
-  }
+  }, [markAsRead])
 
   const handleSendMessage = async (e) => {
     e.preventDefault()
@@ -140,15 +164,86 @@ function DmPage() {
     }
   }
 
+  const openOrCreateRoom = useCallback(async (targetUserId, roomList = rooms) => {
+    if (!targetUserId || !isAuthenticated) {
+      return
+    }
+
+    if (String(targetUserId) === String(user?.id)) {
+      navigate('/dm', { replace: true })
+      return
+    }
+
+    const existingRoom = findRoomByPeerUserId(roomList, targetUserId)
+
+    if (existingRoom) {
+      setSelectedRoom(existingRoom)
+      navigate('/dm', { replace: true })
+      return
+    }
+
+    try {
+      setIsStartingRoom(true)
+
+      const response = await axios.post(
+        '/api/dm/rooms',
+        { peerUserId: Number(targetUserId) },
+        { withCredentials: true }
+      )
+
+      if (response.data.success) {
+        const createdRoom = response.data.data
+        const refreshedRooms = await fetchRooms({
+          preferredRoomId: createdRoom?.roomId,
+          preferredPeerUserId: targetUserId,
+        })
+
+        const nextRoom =
+          refreshedRooms.find((room) => room.roomId === createdRoom?.roomId) ||
+          findRoomByPeerUserId(refreshedRooms, targetUserId)
+
+        if (nextRoom) {
+          setSelectedRoom(nextRoom)
+        }
+
+        navigate('/dm', { replace: true })
+      } else {
+        alert(response.data.message || 'Failed to start conversation.')
+      }
+    } catch (error) {
+      console.error('Start DM room error:', error)
+      alert('Failed to open conversation.')
+    } finally {
+      setIsStartingRoom(false)
+    }
+  }, [fetchRooms, findRoomByPeerUserId, isAuthenticated, navigate, rooms, user?.id])
+
   useEffect(() => {
-    fetchRooms()
-  }, [])
+    if (isLoading) return
+
+    if (!isAuthenticated) {
+      navigate('/login', { replace: true })
+      return
+    }
+
+    const initializeDmPage = async () => {
+      const roomList = await fetchRooms({
+        preferredPeerUserId: requestedUserId,
+      })
+
+      if (requestedUserId) {
+        await openOrCreateRoom(requestedUserId, roomList)
+      }
+    }
+
+    initializeDmPage()
+  }, [fetchRooms, isLoading, isAuthenticated, navigate, openOrCreateRoom, requestedUserId])
 
   useEffect(() => {
     if (selectedRoom?.roomId) {
       fetchMessages(selectedRoom.roomId)
     }
-  }, [selectedRoom?.roomId])
+  }, [fetchMessages, selectedRoom?.roomId])
 
   useEffect(() => {
     if (!selectedRoom?.roomId) return
@@ -159,11 +254,15 @@ function DmPage() {
     }, 3000)
 
     return () => clearInterval(interval)
-  }, [selectedRoom?.roomId])
+  }, [fetchMessages, fetchRooms, selectedRoom?.roomId])
 
   useEffect(() => {
     messageEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  if (isLoading) {
+    return null
+  }
 
   return (
     <>
@@ -176,6 +275,11 @@ function DmPage() {
           <div className="dm-room-panel">
             <div className="dm-room-panel-header">
               <h2>Direct Messages</h2>
+              {isStartingRoom && (
+                <p className="dm-room-panel-subtitle">
+                  Opening conversation{requestedUserName ? ` with ${requestedUserName}` : ''}...
+                </p>
+              )}
             </div>
 
             <div className="dm-room-list">

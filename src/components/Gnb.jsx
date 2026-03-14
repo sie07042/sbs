@@ -46,6 +46,12 @@ function GNB() {
               <span className="gnb-loading">Loading...</span>
             ) : isAuthenticated ? (
               <>
+                <Link
+                  to="/dm"
+                  className={`gnb-menu-link ${location.pathname.startsWith('/dm') ? 'active' : ''}`}
+                >
+                  DM
+                </Link>
                 <Link to="/profile" className="gnb-user-chip">
                   <img
                     src={user?.profileImage || defaultUserImage}
