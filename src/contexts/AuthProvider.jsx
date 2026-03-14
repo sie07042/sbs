@@ -5,6 +5,26 @@ import AuthContext from './AuthContext'
 const USER_STORAGE_KEY = 'user'
 const SESSION_TOKEN_KEY = 'accessToken'
 
+const normalizeUser = (rawUser) => {
+  if (!rawUser) {
+    return null
+  }
+
+  const source = rawUser.user && typeof rawUser.user === 'object' ? rawUser.user : rawUser
+  const id = source.id ?? source.userId ?? rawUser.id ?? rawUser.userId ?? null
+
+  return {
+    ...rawUser,
+    ...source,
+    id,
+    userId: source.userId ?? id,
+    email: source.email ?? rawUser.email ?? '',
+    name: source.name ?? rawUser.name ?? '',
+    profileImage: source.profileImage ?? rawUser.profileImage ?? null,
+    role: source.role ?? rawUser.role ?? null,
+  }
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [accessToken, setAccessToken] = useState(null)
@@ -20,7 +40,12 @@ export function AuthProvider({ children }) {
       }
 
       try {
-        const userData = JSON.parse(savedUser)
+        const userData = normalizeUser(JSON.parse(savedUser))
+
+        if (!userData?.id) {
+          throw new Error('Stored user is missing id')
+        }
+
         setUser(userData)
         setAccessToken(savedToken)
         return true
@@ -60,7 +85,7 @@ export function AuthProvider({ children }) {
 
         if (response.data.success) {
           const token = response.data.data.accessToken
-          const userData = response.data.data.user || JSON.parse(savedUser)
+          const userData = normalizeUser(response.data.data.user || JSON.parse(savedUser))
 
           setUser(userData)
           setAccessToken(token)
@@ -91,9 +116,11 @@ export function AuthProvider({ children }) {
   }, [accessToken, user])
 
   const login = (userData, token) => {
-    setUser(userData)
+    const normalizedUser = normalizeUser(userData)
+
+    setUser(normalizedUser)
     setAccessToken(token)
-    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userData))
+    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(normalizedUser))
     sessionStorage.setItem(SESSION_TOKEN_KEY, token)
   }
 
@@ -118,8 +145,10 @@ export function AuthProvider({ children }) {
   }
 
   const updateUser = (nextUser) => {
-    setUser(nextUser)
-    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(nextUser))
+    const normalizedUser = normalizeUser(nextUser)
+
+    setUser(normalizedUser)
+    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(normalizedUser))
   }
 
   const refreshAccessToken = async () => {
@@ -136,7 +165,7 @@ export function AuthProvider({ children }) {
       }
 
       const newAccessToken = response.data.data.accessToken
-      const userData = response.data.data.user || user
+      const userData = normalizeUser(response.data.data.user || user)
 
       setUser(userData)
       setAccessToken(newAccessToken)

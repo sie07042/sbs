@@ -31,6 +31,17 @@ function PostList() {
   const deferredSearch = useDeferredValue(searchInput)
   const deferredHashtagInput = useDeferredValue(hashtagInput)
   const getPostId = (post) => post?.id || post?.postId
+  const getAuthorId = (post) => post?.author?.id || post?.userId
+  const getAuthorName = (post) => post?.author?.name || post?.userName || ''
+  const isOwnPost = (post) => {
+    const authorId = getAuthorId(post)
+
+    if (authorId && user?.id) {
+      return String(authorId) === String(user.id)
+    }
+
+    return !!(user?.name && getAuthorName(post) && user.name === getAuthorName(post))
+  }
 
   const { posts, isLoading, error, fetchPosts, updatePost, deletePost } = usePosts(accessToken, {
     myPostsOnly: activeTab === 'mine',
@@ -161,7 +172,7 @@ function PostList() {
 
     const uniqueAuthorIds = [...new Set(
       visiblePosts
-        .map((post) => post.author?.id || post.userId)
+        .map((post) => getAuthorId(post))
         .filter((authorId) => authorId && String(authorId) !== String(user?.id))
     )]
 
@@ -398,11 +409,29 @@ function PostList() {
   }
 
   const isPostLoading = isLoading || isHashtagLoading
-  const topAuthors = visiblePosts.slice(0, 4).map((post) => ({
-    authorId: post.author?.id || post.userId,
-    name: post.author?.name || post.userName || 'Unknown',
-    handle: `@${(post.author?.name || post.userName || 'user').replace(/\s+/g, '').toLowerCase()}`,
-  }))
+  const topAuthors = useMemo(() => {
+    const authorMap = new Map()
+
+    visiblePosts.forEach((post) => {
+      const authorId = getAuthorId(post)
+      const name = getAuthorName(post) || 'Unknown'
+      const authorKey = authorId ? `id:${authorId}` : `name:${name}`
+
+      if (!authorId) {
+        return
+      }
+
+      if (!authorMap.has(authorKey) && !isOwnPost(post)) {
+        authorMap.set(authorKey, {
+          authorId,
+          name,
+          handle: `@${name.replace(/\s+/g, '').toLowerCase() || 'user'}`,
+        })
+      }
+    })
+
+    return Array.from(authorMap.values()).slice(0, 4)
+  }, [user?.id, user?.name, visiblePosts])
 
   return (
     <>
@@ -593,9 +622,9 @@ function PostList() {
                       isLiking={likeLoadingIds.includes(postId)}
                       isBookmarked={!!bookmarkStateByPost[postId]}
                       isBookmarkLoading={bookmarkLoadingIds.includes(postId)}
-                      isFollowingAuthor={!!followStateByAuthor[post.author?.id || post.userId]}
-                      isFollowLoading={followLoadingIds.includes(post.author?.id || post.userId)}
-                      canDelete={String(post.author?.id || post.userId) === String(user?.id)}
+                      isFollowingAuthor={!!followStateByAuthor[getAuthorId(post)]}
+                      isFollowLoading={followLoadingIds.includes(getAuthorId(post))}
+                      canDelete={isOwnPost(post)}
                       onToggleLike={handleToggleLike}
                       onToggleBookmark={handleToggleBookmark}
                       onToggleFollow={handleToggleFollow}
