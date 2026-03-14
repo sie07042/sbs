@@ -61,7 +61,7 @@ function OAuthCallback() {
         const hash = window.location.hash;
         if (hash) {
           console.log('URL 해시 감지 - 해시에서 토큰 추출');
-          handleHashCallback(hash);
+          await handleHashCallback(hash);
           return;
         }
 
@@ -94,7 +94,7 @@ function OAuthCallback() {
      * - accessToken: JWT 액세스 토큰
      * - user: URL 인코딩된 JSON 사용자 정보
      */
-    const handleHashCallback = (hash) => {
+    const handleHashCallback = async (hash) => {
       try {
         // '#' 제거 후 파라미터 파싱
         const params = new URLSearchParams(hash.substring(1));
@@ -119,7 +119,7 @@ function OAuthCallback() {
         console.log('로그인 성공 - 사용자:', user.email || user.name);
 
         // AuthContext에 로그인 정보 저장
-        login(user, accessToken);
+        await login(user, accessToken);
 
         alert('카카오 로그인 성공!');
 
@@ -145,7 +145,7 @@ function OAuthCallback() {
           const { accessToken, user } = response.data.data;
           console.log('토큰 교환 성공 - 사용자:', user.email);
 
-          login(user, accessToken);
+          await login(user, accessToken);
           alert('카카오 로그인 성공!');
           navigate('/', { replace: true });
         } else {

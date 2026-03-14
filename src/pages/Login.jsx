@@ -64,7 +64,7 @@ function Login() {
       )
 
       if (response.data.success) {
-        login(response.data.data.user, response.data.data.accessToken)
+        await login(response.data.data.user, response.data.data.accessToken)
         alert(response.data.message)
         navigate('/')
       } else {

@@ -30,6 +30,26 @@ export function AuthProvider({ children }) {
   const [accessToken, setAccessToken] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
 
+  const fetchCurrentUser = async (token, fallbackUser = null) => {
+    if (!token) {
+      return normalizeUser(fallbackUser)
+    }
+
+    try {
+      const response = await axios.get('/api/user/me', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        withCredentials: true,
+      })
+
+      return normalizeUser(response.data?.data || fallbackUser)
+    } catch (error) {
+      console.error('Failed to fetch current user from server:', error)
+      return normalizeUser(fallbackUser)
+    }
+  }
+
   useEffect(() => {
     const restoreFromSession = () => {
       const savedUser = localStorage.getItem(USER_STORAGE_KEY)
@@ -85,7 +105,10 @@ export function AuthProvider({ children }) {
 
         if (response.data.success) {
           const token = response.data.data.accessToken
-          const userData = normalizeUser(response.data.data.user || JSON.parse(savedUser))
+          const userData = await fetchCurrentUser(
+            token,
+            response.data.data.user || JSON.parse(savedUser)
+          )
 
           setUser(userData)
           setAccessToken(token)
@@ -115,12 +138,13 @@ export function AuthProvider({ children }) {
     checkAuth()
   }, [accessToken, user])
 
-  const login = (userData, token) => {
+  const login = async (userData, token) => {
     const normalizedUser = normalizeUser(userData)
+    const hydratedUser = await fetchCurrentUser(token, normalizedUser)
 
-    setUser(normalizedUser)
+    setUser(hydratedUser)
     setAccessToken(token)
-    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(normalizedUser))
+    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(hydratedUser))
     sessionStorage.setItem(SESSION_TOKEN_KEY, token)
   }
 
@@ -165,7 +189,7 @@ export function AuthProvider({ children }) {
       }
 
       const newAccessToken = response.data.data.accessToken
-      const userData = normalizeUser(response.data.data.user || user)
+      const userData = await fetchCurrentUser(newAccessToken, response.data.data.user || user)
 
       setUser(userData)
       setAccessToken(newAccessToken)
