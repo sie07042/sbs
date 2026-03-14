@@ -4,6 +4,7 @@ import axios from 'axios'
 
 import GNB from '../components/Gnb'
 import Footer from '../components/Footer'
+import PostCard from '../components/PostCard'
 import ProfileImageSection from '../components/ProfileImageSection'
 import { useAuth } from '../hooks/useAuth'
 import { useLanguage } from '../hooks/useLanguage'
@@ -32,6 +33,9 @@ function Profile() {
   const [isFollowListLoading, setIsFollowListLoading] = useState(false)
   const [followLoadingIds, setFollowLoadingIds] = useState([])
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [timelinePosts, setTimelinePosts] = useState([])
+  const [isTimelineLoading, setIsTimelineLoading] = useState(true)
+  const [timelineError, setTimelineError] = useState('')
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -67,6 +71,42 @@ function Profile() {
 
     fetchFollowCounts()
   }, [accessToken, user?.id])
+
+  useEffect(() => {
+    const fetchTimelinePosts = async () => {
+      if (!user?.id) {
+        setTimelinePosts([])
+        setIsTimelineLoading(false)
+        return
+      }
+
+      try {
+        setIsTimelineLoading(true)
+        setTimelineError('')
+
+        const response = await axios.get(`/api/posts/user/${user.id}?page=0&size=20`, {
+          headers: accessToken
+            ? { Authorization: `Bearer ${accessToken}` }
+            : undefined,
+          withCredentials: true,
+        })
+
+        const content = Array.isArray(response.data?.data)
+          ? response.data.data
+          : response.data?.data?.content || []
+
+        setTimelinePosts(content)
+      } catch (error) {
+        console.error('Failed to load profile timeline:', error)
+        setTimelineError(t('profileTimelineLoadFailed', '타임라인을 불러오지 못했습니다.'))
+        setTimelinePosts([])
+      } finally {
+        setIsTimelineLoading(false)
+      }
+    }
+
+    fetchTimelinePosts()
+  }, [accessToken, t, user?.id])
 
   const profileTitle = useMemo(
     () => formData.name?.trim() || user?.name || t('profileMyProfile'),
@@ -159,6 +199,30 @@ function Profile() {
     } catch (error) {
       const message = error.response?.data?.message || t('profileUpdateError')
       alert(message)
+    }
+  }
+
+  const handleDeletePost = async (postId) => {
+    if (!accessToken || !postId) {
+      return
+    }
+
+    if (!window.confirm(t('postDeleteConfirm'))) {
+      return
+    }
+
+    try {
+      await axios.delete(`/api/posts/${postId}`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        withCredentials: true,
+      })
+
+      setTimelinePosts((prev) => prev.filter((post) => String(post.id || post.postId) !== String(postId)))
+    } catch (error) {
+      console.error('Failed to delete profile timeline post:', error)
+      alert(error.response?.data?.message || t('postDeleteFailed'))
     }
   }
 
@@ -260,6 +324,45 @@ function Profile() {
               previewBackground={previewBackground}
               onImageSelect={handleImageSelect}
             />
+          </section>
+
+          <section className="profile-timeline-panel">
+            <div className="profile-panel-header">
+              <div>
+                <span className="profile-panel-kicker">TIMELINE</span>
+                <h2>{t('profileTimelineTitle', '내 타임라인')}</h2>
+              </div>
+              <p>{t('profileTimelineHint', '공개 범위와 상관없이 내 피드에서는 모든 게시글이 보입니다.')}</p>
+            </div>
+
+            {isTimelineLoading ? (
+              <div className="profile-timeline-state">{t('profileTimelineLoading', '타임라인을 불러오는 중입니다.')}</div>
+            ) : timelineError ? (
+              <div className="profile-timeline-state error">{timelineError}</div>
+            ) : timelinePosts.length === 0 ? (
+              <div className="profile-timeline-state">{t('profileTimelineEmpty', '아직 작성한 게시글이 없습니다.')}</div>
+            ) : (
+              <div className="profile-timeline-list">
+                {timelinePosts.map((post) => {
+                  const postId = post.id || post.postId
+
+                  if (!postId) {
+                    return null
+                  }
+
+                  return (
+                    <PostCard
+                      key={postId}
+                      post={post}
+                      isAuthenticated={isAuthenticated}
+                      currentUserId={user?.id}
+                      canDelete
+                      onDeletePost={handleDeletePost}
+                    />
+                  )
+                })}
+              </div>
+            )}
           </section>
         </div>
       </div>
