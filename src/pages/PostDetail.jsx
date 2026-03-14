@@ -46,9 +46,9 @@ function PostDetail() {
       console.error('Post detail fetch failed:', err)
 
       if (err.response?.status === 404) {
-        setError('Post not found.')
+        setError('게시글을 찾을 수 없어요.')
       } else {
-        setError('Failed to load the post.')
+        setError('게시글을 불러오지 못했어요.')
       }
     } finally {
       setIsLoading(false)
@@ -60,7 +60,7 @@ function PostDetail() {
   }, [fetchPost])
 
   const authorId = post?.author?.id || post?.userId
-  const authorName = post?.author?.name || post?.userName || 'Unknown'
+  const authorName = post?.author?.name || post?.userName || '알 수 없음'
   const authorImage = post?.author?.profileImage || post?.userProfileImage || null
 
   const isOwner = user && post && (
@@ -76,26 +76,34 @@ function PostDetail() {
     if (!authorId) return
 
     try {
-      const [countResponse, followCheckResponse] = await Promise.all([
-        axios.get(`/api/users/${authorId}/follow/count`, {
-          withCredentials: true,
-        }),
-        canFollow
-          ? axios.get(`/api/users/${authorId}/follow/check`, {
-              headers: accessToken
-                ? {
-                    Authorization: `Bearer ${accessToken}`,
-                  }
-                : undefined,
-              withCredentials: true,
-            })
-          : Promise.resolve({ data: { data: false } }),
-      ])
+      const countResponse = await axios.get(`/api/users/${authorId}/follow/count`, {
+        headers: accessToken
+          ? {
+              Authorization: `Bearer ${accessToken}`,
+            }
+          : undefined,
+        withCredentials: true,
+      })
 
       setFollowCounts(countResponse.data?.data || { followerCount: 0, followingCount: 0 })
+
+      if (!canFollow) {
+        setIsFollowing(false)
+        return
+      }
+
+      const followCheckResponse = await axios.get(`/api/users/${authorId}/follow/check`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        withCredentials: true,
+      })
+
       setIsFollowing(!!followCheckResponse.data?.data)
     } catch (err) {
-      console.error('Failed to fetch follow state:', err)
+      if (err.response?.status !== 401) {
+        console.error('Failed to fetch follow state:', err)
+      }
     }
   }, [accessToken, authorId, canFollow])
 
@@ -104,7 +112,7 @@ function PostDetail() {
   }, [fetchFollowState])
 
   const handleDelete = async () => {
-    if (!window.confirm('Delete this post?')) {
+    if (!window.confirm('이 게시글을 삭제할까요?')) {
       return
     }
 
@@ -118,11 +126,11 @@ function PostDetail() {
         withCredentials: true,
       })
 
-      alert('Post deleted.')
+      alert('게시글을 삭제했어요.')
       navigate('/posts')
     } catch (err) {
       console.error('Post delete failed:', err)
-      alert('Failed to delete the post.')
+      alert('게시글을 삭제하지 못했어요.')
     }
   }
 
@@ -132,7 +140,7 @@ function PostDetail() {
     }
 
     if (!isAuthenticated || !accessToken) {
-      alert('Login is required to like this post.')
+      alert('좋아요는 로그인 후 사용할 수 있어요.')
       return
     }
 
@@ -160,7 +168,7 @@ function PostDetail() {
       }))
     } catch (err) {
       console.error('Like toggle failed:', err)
-      alert('Failed to update like.')
+      alert('좋아요를 반영하지 못했어요.')
     } finally {
       setIsLikeLoading(false)
     }
@@ -172,7 +180,7 @@ function PostDetail() {
     }
 
     if (!accessToken) {
-      alert('Login is required to follow users.')
+      alert('팔로우는 로그인 후 사용할 수 있어요.')
       return
     }
 
@@ -196,7 +204,7 @@ function PostDetail() {
       })
     } catch (err) {
       console.error('Failed to toggle follow:', err)
-      alert(err.response?.data?.message || 'Failed to update follow.')
+      alert(err.response?.data?.message || '팔로우를 반영하지 못했어요.')
     } finally {
       setIsFollowLoading(false)
     }
@@ -221,7 +229,7 @@ function PostDetail() {
       setFollowModalType(type)
     } catch (err) {
       console.error(`Failed to fetch ${type}:`, err)
-      alert(err.response?.data?.message || 'Failed to load follow list.')
+      alert(err.response?.data?.message || '팔로우 목록을 불러오지 못했어요.')
     } finally {
       setIsFollowListLoading(false)
     }
@@ -229,7 +237,7 @@ function PostDetail() {
 
   const handleFollowUserFromList = async (targetUserId, currentlyFollowing) => {
     if (!accessToken) {
-      alert('Login is required to follow users.')
+      alert('팔로우는 로그인 후 사용할 수 있어요.')
       return
     }
 
@@ -250,7 +258,7 @@ function PostDetail() {
       )))
     } catch (err) {
       console.error('Failed to update follow user from list:', err)
-      alert(err.response?.data?.message || 'Failed to update follow.')
+      alert(err.response?.data?.message || '팔로우를 반영하지 못했어요.')
     }
   }
 
@@ -275,123 +283,131 @@ function PostDetail() {
     return `${year}.${month}.${day} ${hours}:${minutes}`
   }
 
+  const visibilityLabel = post?.visibility === 'PRIVATE'
+    ? '비공개'
+    : post?.visibility === 'FOLLOWERS_ONLY'
+      ? '팔로워 공개'
+      : '전체 공개'
+
   return (
     <>
       <GNB />
-      <div className="post-detail-container">
+      <div className="post-detail-page">
         {isLoading ? (
-          <div className="post-detail-loading">
-            <p>Loading post...</p>
+          <div className="post-detail-state">
+            <p>게시글을 불러오는 중...</p>
           </div>
         ) : error ? (
-          <div className="post-detail-error">
+          <div className="post-detail-state">
             <p>{error}</p>
-            <button onClick={() => navigate('/posts')} className="back-button" type="button">
-              Back to list
+            <button onClick={() => navigate(-1)} className="post-detail-back-button" type="button">
+              뒤로가기
             </button>
           </div>
         ) : post ? (
-          <div className="post-detail-card">
-            <div className="post-detail-header">
-              <div className="post-detail-author">
-                {authorImage ? (
-                  <img src={authorImage} alt={authorName} className="post-detail-avatar" />
-                ) : (
-                  <div className="post-detail-avatar-placeholder">
-                    {authorName.charAt(0)}
-                  </div>
-                )}
+          <div className="post-detail-shell">
+            <div className="post-detail-topbar">
+              <button onClick={() => navigate(-1)} className="post-detail-back-button" type="button">
+                뒤로가기
+              </button>
+              <button onClick={() => navigate('/posts')} className="post-detail-ghost-button" type="button">
+                피드로 이동
+              </button>
+            </div>
 
-                <div className="post-detail-author-info">
-                  <span className="post-detail-author-name">{authorName}</span>
-                  <span className="post-detail-date">{formatDate(post.createdAt)}</span>
-                  <div className="post-detail-follow-summary">
-                    <button
-                      type="button"
-                      className="post-detail-follow-stat"
-                      onClick={() => fetchFollowUsers('followers')}
-                    >
-                      Followers {followCounts.followerCount || 0}
-                    </button>
-                    <button
-                      type="button"
-                      className="post-detail-follow-stat"
-                      onClick={() => fetchFollowUsers('followings')}
-                    >
-                      Following {followCounts.followingCount || 0}
-                    </button>
+            <article className="post-detail-card">
+              <div className="post-detail-header">
+                <div className="post-detail-author">
+                  {authorImage ? (
+                    <img src={authorImage} alt={authorName} className="post-detail-avatar" />
+                  ) : (
+                    <div className="post-detail-avatar-placeholder">
+                      {authorName.charAt(0)}
+                    </div>
+                  )}
+
+                  <div className="post-detail-author-info">
+                    <div className="post-detail-author-row">
+                      <span className="post-detail-author-name">{authorName}</span>
+                      <span className="post-detail-visibility-chip">{visibilityLabel}</span>
+                    </div>
+                    <span className="post-detail-date">{formatDate(post.createdAt)}</span>
+                    <div className="post-detail-follow-summary">
+                      <button
+                        type="button"
+                        className="post-detail-follow-stat"
+                        onClick={() => fetchFollowUsers('followers')}
+                      >
+                        팔로워 {followCounts.followerCount || 0}
+                      </button>
+                      <button
+                        type="button"
+                        className="post-detail-follow-stat"
+                        onClick={() => fetchFollowUsers('followings')}
+                      >
+                        팔로잉 {followCounts.followingCount || 0}
+                      </button>
+                    </div>
                   </div>
+                </div>
+
+                <div className="post-detail-actions">
+                  {canFollow && (
+                    <button
+                      onClick={handleToggleFollow}
+                      className={`post-detail-action-button accent ${isFollowing ? 'following' : ''}`}
+                      type="button"
+                      disabled={isFollowLoading}
+                    >
+                      {isFollowLoading ? '처리 중...' : isFollowing ? '팔로잉' : '팔로우'}
+                    </button>
+                  )}
+
+                  {canStartDm && (
+                    <button onClick={handleStartDm} className="post-detail-action-button" type="button">
+                      메시지
+                    </button>
+                  )}
+
+                  {isOwner && (
+                    <button onClick={handleDelete} className="post-detail-action-button danger" type="button">
+                      삭제
+                    </button>
+                  )}
                 </div>
               </div>
 
-              <div className="post-detail-actions">
-                {canFollow && (
-                  <button
-                    onClick={handleToggleFollow}
-                    className={`follow-button ${isFollowing ? 'following' : ''}`}
-                    type="button"
-                    disabled={isFollowLoading}
-                  >
-                    {isFollowLoading ? 'Saving...' : isFollowing ? 'Following' : 'Follow'}
-                  </button>
-                )}
-
-                {canStartDm && (
-                  <button onClick={handleStartDm} className="message-button" type="button">
-                    Message
-                  </button>
-                )}
-
-                {isOwner && (
-                  <button onClick={handleDelete} className="delete-button" type="button">
-                    Delete
-                  </button>
-                )}
+              <div className="post-detail-content">
+                <p>{post.content}</p>
               </div>
-            </div>
 
-            <div className="post-detail-content">
-              <p>{post.content}</p>
-            </div>
+              {post.images && post.images.length > 0 && (
+                <div className="post-detail-images">
+                  {post.images.map((image, index) => (
+                    <div key={image.id || index} className="post-detail-image-item">
+                      <img
+                        src={image.imageUrl || image.url}
+                        alt={`게시글 이미지 ${index + 1}`}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
 
-            {post.images && post.images.length > 0 && (
-              <div className="post-detail-images">
-                {post.images.map((image, index) => (
-                  <div key={image.id || index} className="post-detail-image-item">
-                    <img
-                      src={image.imageUrl || image.url}
-                      alt={`Post image ${index + 1}`}
-                    />
-                  </div>
-                ))}
+              <div className="post-detail-stats">
+                <button
+                  type="button"
+                  className={`post-detail-like-button ${post.liked ? 'liked' : ''}`}
+                  onClick={handleToggleLike}
+                  disabled={isLikeLoading}
+                  aria-pressed={!!post.liked}
+                >
+                  좋아요 {post.likeCount || 0}
+                </button>
+                <span className="post-detail-stat">댓글 {post.commentCount || 0}</span>
+                <span className="post-detail-stat">조회 {post.viewCount || 0}</span>
               </div>
-            )}
-
-            <div className="post-detail-stats">
-              <button
-                type="button"
-                className={`post-detail-like-button ${post.liked ? 'liked' : ''}`}
-                onClick={handleToggleLike}
-                disabled={isLikeLoading}
-                aria-pressed={!!post.liked}
-              >
-                {`Like ${post.likeCount || 0}`}
-              </button>
-              <span className="post-detail-stat">{`Comments ${post.commentCount || 0}`}</span>
-              <span className="post-detail-stat">{`Views ${post.viewCount || 0}`}</span>
-            </div>
-
-            {post.visibility && post.visibility !== 'PUBLIC' && (
-              <div className="post-detail-visibility">
-                {post.visibility === 'PRIVATE' ? 'Private' : 'Followers only'}
-              </div>
-            )}
-
-            <div className="post-detail-footer">
-              <button onClick={() => navigate('/posts')} className="back-button" type="button">
-                Back to list
-              </button>
-            </div>
+            </article>
           </div>
         ) : null}
       </div>
@@ -400,21 +416,21 @@ function PostDetail() {
         <div className="follow-modal-overlay" onClick={() => setFollowModalType(null)}>
           <div className="follow-modal-card" onClick={(event) => event.stopPropagation()}>
             <div className="follow-modal-header">
-              <h3>{followModalType === 'followers' ? 'Followers' : 'Following'}</h3>
+              <h3>{followModalType === 'followers' ? '팔로워' : '팔로잉'}</h3>
               <button
                 type="button"
                 className="follow-modal-close"
                 onClick={() => setFollowModalType(null)}
               >
-                Close
+                닫기
               </button>
             </div>
 
             <div className="follow-modal-body">
               {isFollowListLoading ? (
-                <div className="follow-modal-empty">Loading...</div>
+                <div className="follow-modal-empty">불러오는 중...</div>
               ) : followUsers.length === 0 ? (
-                <div className="follow-modal-empty">No users found.</div>
+                <div className="follow-modal-empty">표시할 사용자가 없어요.</div>
               ) : (
                 followUsers.map((followUser) => {
                   const isCurrentUser = String(followUser.id) === String(user?.id)
@@ -445,7 +461,7 @@ function PostDetail() {
                           className={`follow-user-button ${followUser.isFollowing ? 'following' : ''}`}
                           onClick={() => handleFollowUserFromList(followUser.id, !!followUser.isFollowing)}
                         >
-                          {followUser.isFollowing ? 'Following' : 'Follow'}
+                          {followUser.isFollowing ? '팔로잉' : '팔로우'}
                         </button>
                       )}
                     </div>

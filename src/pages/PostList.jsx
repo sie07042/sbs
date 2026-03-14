@@ -37,16 +37,23 @@ function PostList() {
     const fetchTrendingHashtags = async () => {
       try {
         const response = await axios.get('/api/hashtags/trending/top?limit=8', {
+          headers: accessToken
+            ? {
+                Authorization: `Bearer ${accessToken}`,
+              }
+            : undefined,
           withCredentials: true,
         })
         setTrendingHashtags(response.data?.data || [])
       } catch (err) {
-        console.error('Failed to fetch trending hashtags:', err)
+        if (err.response?.status !== 401) {
+          console.error('Failed to fetch trending hashtags:', err)
+        }
       }
     }
 
     fetchTrendingHashtags()
-  }, [])
+  }, [accessToken])
 
   useEffect(() => {
     const keyword = deferredHashtagInput.replace(/^#/, '').trim()

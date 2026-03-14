@@ -3,13 +3,37 @@
   inset: 0;
   z-index: 1200;
   display: flex;
-  align-items: flex-start;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
   padding: 28px 28px 92px;
   background:
     radial-gradient(circle at top left, rgba(255, 255, 255, 0.24), transparent 34%),
     linear-gradient(180deg, rgba(10, 16, 27, 0.16), rgba(10, 16, 27, 0.4));
   backdrop-filter: blur(18px);
+}
+
+.dm-page-topbar {
+  width: min(1280px, calc(100vw - 56px));
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  margin-bottom: 14px;
+}
+
+.dm-back-button {
+  min-height: 42px;
+  padding: 0.72rem 1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  background: rgba(255, 255, 255, 0.84);
+  color: #0f172a;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.dm-back-button.ghost {
+  background: rgba(255, 255, 255, 0.62);
 }
 
 .dm-page-card {
@@ -255,6 +279,10 @@
     padding: 16px 16px 82px;
   }
 
+  .dm-page-topbar {
+    width: calc(100vw - 32px);
+  }
+
   .dm-page-card {
     width: calc(100vw - 32px);
     height: calc(100vh - 98px);
@@ -269,6 +297,10 @@
 @media (max-width: 768px) {
   .dm-page-container {
     padding: 10px 10px 74px;
+  }
+
+  .dm-page-topbar {
+    width: calc(100vw - 20px);
   }
 
   .dm-page-card {

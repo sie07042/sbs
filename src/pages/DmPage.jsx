@@ -309,6 +309,15 @@ function DmPage() {
       </div>
 
       <div className="dm-page-container">
+        <div className="dm-page-topbar">
+          <button type="button" className="dm-back-button" onClick={() => navigate(-1)}>
+            뒤로가기
+          </button>
+          <button type="button" className="dm-back-button ghost" onClick={() => navigate('/posts')}>
+            피드로 이동
+          </button>
+        </div>
+
         <div className="dm-page-card">
           <div className="dm-room-panel">
             <div className="dm-room-panel-header">
@@ -399,7 +408,7 @@ function DmPage() {
                     type="text"
                     value={messageInput}
                     onChange={(e) => setMessageInput(e.target.value)}
-                    placeholder="Enter your message"
+                    placeholder="메시지를 입력하세요"
                     className="dm-message-input"
                     disabled={isSending}
                   />
