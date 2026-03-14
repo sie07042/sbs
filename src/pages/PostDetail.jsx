@@ -6,12 +6,14 @@ import Footer from '../components/Footer'
 import GNB from '../components/Gnb'
 import { API_CONFIG } from '../config'
 import { useAuth } from '../hooks/useAuth'
+import { useLanguage } from '../hooks/useLanguage'
 import './PostDetail.css'
 
 function PostDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { user, accessToken, isAuthenticated } = useAuth()
+  const { t } = useLanguage()
   const postId = id && id !== 'undefined' && id !== 'null' ? id : null
 
   const [post, setPost] = useState(null)
@@ -55,7 +57,7 @@ function PostDetail() {
 
   const fetchPost = useCallback(async () => {
     if (!postId) {
-      setError('Invalid post id.')
+      setError(t('postInvalidId'))
       setIsLoading(false)
       return
     }
@@ -64,22 +66,19 @@ function PostDetail() {
     setError(null)
 
     try {
-      const response = await axios.get(
-        `${API_CONFIG.baseUrl}${API_CONFIG.endpoints.posts}/${postId}`,
-        {
-          headers: authHeaders,
-          withCredentials: true,
-        }
-      )
+      const response = await axios.get(`${API_CONFIG.baseUrl}${API_CONFIG.endpoints.posts}/${postId}`, {
+        headers: authHeaders,
+        withCredentials: true,
+      })
 
       setPost(response.data?.data || response.data)
     } catch (err) {
       console.error('Post detail fetch failed:', err)
-      setError(err.response?.status === 404 ? 'Post not found.' : 'Failed to load the post.')
+      setError(err.response?.status === 404 ? t('postNotFound') : t('postLoadFailed'))
     } finally {
       setIsLoading(false)
     }
-  }, [authHeaders, postId])
+  }, [authHeaders, postId, t])
 
   const fetchComments = useCallback(async () => {
     if (!postId) {
@@ -111,7 +110,7 @@ function PostDetail() {
   }, [fetchComments, fetchPost])
 
   const authorId = post?.author?.id || post?.userId
-  const authorName = post?.author?.name || post?.userName || 'Unknown'
+  const authorName = post?.author?.name || post?.userName || t('cardUnknown')
   const authorImage = post?.author?.profileImage || post?.userProfileImage || null
   const isOwner = !!(user && post && (
     user.id === post.userId ||
@@ -153,7 +152,7 @@ function PostDetail() {
   }, [accessToken, authHeaders, authorId, canFollow])
 
   const fetchBookmarkState = useCallback(async () => {
-    if (!isAuthenticated || !accessToken) {
+    if (!isAuthenticated || !accessToken || !postId) {
       setIsBookmarked(false)
       return
     }
@@ -199,7 +198,7 @@ function PostDetail() {
   }
 
   const handleDelete = async () => {
-    if (!window.confirm('Delete this post?')) {
+    if (!window.confirm(t('postDeleteConfirm'))) {
       return
     }
 
@@ -209,11 +208,11 @@ function PostDetail() {
         withCredentials: true,
       })
 
-      alert('The post has been removed.')
+      alert(t('postDeleteDone'))
       navigate('/posts')
     } catch (err) {
       console.error('Post delete failed:', err)
-      alert('Failed to delete the post.')
+      alert(t('postDeleteFailed'))
     }
   }
 
@@ -223,7 +222,7 @@ function PostDetail() {
     }
 
     if (!isAuthenticated || !accessToken) {
-      alert('Log in to like posts.')
+      alert(t('postLoginLike'))
       return
     }
 
@@ -248,7 +247,7 @@ function PostDetail() {
       }))
     } catch (err) {
       console.error('Like toggle failed:', err)
-      alert('Failed to update like state.')
+      alert(t('postLikeFailed'))
     } finally {
       setIsLikeLoading(false)
     }
@@ -256,7 +255,7 @@ function PostDetail() {
 
   const handleToggleBookmark = async () => {
     if (!isAuthenticated || !accessToken) {
-      alert('Log in to save posts.')
+      alert(t('postLoginSave'))
       return
     }
 
@@ -281,7 +280,7 @@ function PostDetail() {
       )
     } catch (err) {
       console.error('Failed to update bookmark:', err)
-      alert(err.response?.data?.message || 'Failed to update bookmark.')
+      alert(err.response?.data?.message || t('postSaveFailed'))
     } finally {
       setIsBookmarkLoading(false)
     }
@@ -293,7 +292,7 @@ function PostDetail() {
     }
 
     if (!accessToken) {
-      alert('Log in to follow users.')
+      alert(t('postLoginFollow'))
       return
     }
 
@@ -315,7 +314,7 @@ function PostDetail() {
       })
     } catch (err) {
       console.error('Failed to toggle follow:', err)
-      alert(err.response?.data?.message || 'Failed to update follow state.')
+      alert(err.response?.data?.message || t('postFollowFailed'))
     } finally {
       setIsFollowLoading(false)
     }
@@ -338,7 +337,7 @@ function PostDetail() {
       setFollowModalType(type)
     } catch (err) {
       console.error(`Failed to fetch ${type}:`, err)
-      alert(err.response?.data?.message || 'Failed to load follow list.')
+      alert(err.response?.data?.message || t('postFollowListFailed'))
     } finally {
       setIsFollowListLoading(false)
     }
@@ -346,7 +345,7 @@ function PostDetail() {
 
   const handleFollowUserFromList = async (targetUserId, currentlyFollowing) => {
     if (!accessToken) {
-      alert('Log in to follow users.')
+      alert(t('postLoginFollow'))
       return
     }
 
@@ -365,7 +364,7 @@ function PostDetail() {
       )))
     } catch (err) {
       console.error('Failed to update follow from list:', err)
-      alert(err.response?.data?.message || 'Failed to update follow state.')
+      alert(err.response?.data?.message || t('postFollowFailed'))
     }
   }
 
@@ -385,7 +384,7 @@ function PostDetail() {
     }
 
     if (!isAuthenticated || !accessToken) {
-      alert('Log in to comment.')
+      alert(t('postLoginComment'))
       return
     }
 
@@ -417,7 +416,7 @@ function PostDetail() {
       ))
     } catch (err) {
       console.error('Failed to create comment:', err)
-      alert(err.response?.data?.message || 'Failed to create comment.')
+      alert(err.response?.data?.message || t('postCommentFailed'))
     } finally {
       setCommentSubmitting(false)
     }
@@ -445,7 +444,7 @@ function PostDetail() {
       setReplyLoadedMap((prev) => ({ ...prev, [commentId]: true }))
     } catch (err) {
       console.error('Failed to load replies:', err)
-      alert(err.response?.data?.message || 'Failed to load replies.')
+      alert(err.response?.data?.message || t('postLoadRepliesFailed'))
     } finally {
       setReplyLoadingMap((prev) => ({ ...prev, [commentId]: false }))
     }
@@ -473,7 +472,7 @@ function PostDetail() {
     }
 
     if (!isAuthenticated || !accessToken) {
-      alert('Log in to write a reply.')
+      alert(t('postLoginReply'))
       return
     }
 
@@ -511,17 +510,17 @@ function PostDetail() {
       ))
     } catch (err) {
       console.error('Failed to create reply:', err)
-      alert(err.response?.data?.message || 'Failed to create reply.')
+      alert(err.response?.data?.message || t('postReplyFailed'))
     } finally {
       setReplyLoadingMap((prev) => ({ ...prev, [commentId]: false }))
     }
   }
 
   const visibilityLabel = post?.visibility === 'PRIVATE'
-    ? 'Private'
+    ? t('postPrivate')
     : post?.visibility === 'FOLLOWERS_ONLY'
-      ? 'Followers'
-      : 'Public'
+      ? t('postFollowersOnly')
+      : t('postPublic')
 
   return (
     <>
@@ -529,23 +528,23 @@ function PostDetail() {
       <div className="post-detail-page">
         {isLoading ? (
           <div className="post-detail-state">
-            <p>Loading post...</p>
+            <p>{t('postLoading')}</p>
           </div>
         ) : error ? (
           <div className="post-detail-state">
             <p>{error}</p>
             <button onClick={() => navigate(-1)} className="post-detail-back-button" type="button">
-              Go back
+              {t('postGoBack')}
             </button>
           </div>
         ) : post ? (
           <div className="post-detail-shell">
             <div className="post-detail-topbar">
               <button onClick={() => navigate(-1)} className="post-detail-back-button" type="button">
-                Go back
+                {t('postGoBack')}
               </button>
               <button onClick={() => navigate('/posts')} className="post-detail-ghost-button" type="button">
-                Back to feed
+                {t('postBackToFeed')}
               </button>
             </div>
 
@@ -572,14 +571,14 @@ function PostDetail() {
                         className="post-detail-follow-stat"
                         onClick={() => fetchFollowUsers('followers')}
                       >
-                        Followers {followCounts.followerCount || 0}
+                        {t('profileFollowers')} {followCounts.followerCount || 0}
                       </button>
                       <button
                         type="button"
                         className="post-detail-follow-stat"
                         onClick={() => fetchFollowUsers('followings')}
                       >
-                        Following {followCounts.followingCount || 0}
+                        {t('profileFollowing')} {followCounts.followingCount || 0}
                       </button>
                     </div>
                   </div>
@@ -592,7 +591,7 @@ function PostDetail() {
                     type="button"
                     disabled={isBookmarkLoading}
                   >
-                    {isBookmarkLoading ? 'Saving...' : isBookmarked ? 'Saved' : 'Save'}
+                    {isBookmarkLoading ? t('postSaving') : isBookmarked ? t('postSaved') : t('postSave')}
                   </button>
 
                   {canFollow && (
@@ -602,19 +601,19 @@ function PostDetail() {
                       type="button"
                       disabled={isFollowLoading}
                     >
-                      {isFollowLoading ? 'Working...' : isFollowing ? 'Following' : 'Follow'}
+                      {isFollowLoading ? t('postWorking') : isFollowing ? t('postFollowing') : t('postFollow')}
                     </button>
                   )}
 
                   {canStartDm && (
                     <button onClick={handleStartDm} className="post-detail-action-button" type="button">
-                      Message
+                      {t('postMessage')}
                     </button>
                   )}
 
                   {isOwner && (
                     <button onClick={handleDelete} className="post-detail-action-button danger" type="button">
-                      Delete
+                      {t('postDelete')}
                     </button>
                   )}
                 </div>
@@ -628,10 +627,7 @@ function PostDetail() {
                 <div className="post-detail-images">
                   {post.images.map((image, index) => (
                     <div key={image.id || index} className="post-detail-image-item">
-                      <img
-                        src={image.imageUrl || image.url}
-                        alt={`Post image ${index + 1}`}
-                      />
+                      <img src={image.imageUrl || image.url} alt={`Post image ${index + 1}`} />
                     </div>
                   ))}
                 </div>
@@ -645,42 +641,42 @@ function PostDetail() {
                   disabled={isLikeLoading}
                   aria-pressed={!!post.liked}
                 >
-                  Like {post.likeCount || 0}
+                  {t('postLike')} {post.likeCount || 0}
                 </button>
-                <span className="post-detail-stat">Comments {post.commentCount || 0}</span>
-                <span className="post-detail-stat">Views {post.viewCount || 0}</span>
+                <span className="post-detail-stat">{t('postComments')} {post.commentCount || 0}</span>
+                <span className="post-detail-stat">{t('postViews')} {post.viewCount || 0}</span>
               </div>
             </article>
 
             <section className="post-detail-comments-card">
               <div className="post-detail-comments-header">
                 <div>
-                  <span className="post-detail-comments-kicker">Thread</span>
-                  <h2>Comments</h2>
+                  <span className="post-detail-comments-kicker">{t('postThread')}</span>
+                  <h2>{t('postCommentsHeading')}</h2>
                 </div>
-                <span className="post-detail-stat">{comments.length} loaded</span>
+                <span className="post-detail-stat">{comments.length}{t('postLoadedCountSuffix')}</span>
               </div>
 
               <form className="post-detail-comment-form" onSubmit={handleSubmitComment}>
                 <textarea
                   value={commentInput}
                   onChange={(event) => setCommentInput(event.target.value)}
-                  placeholder={isAuthenticated ? 'Write a comment...' : 'Log in to leave a comment.'}
+                  placeholder={isAuthenticated ? t('postCommentPlaceholder') : t('postCommentLoginHint')}
                   disabled={!isAuthenticated || commentSubmitting}
                 />
                 <div className="post-detail-comment-form-footer">
-                  <span>{isAuthenticated ? 'Replies are available one level deep.' : 'Login required for comments.'}</span>
+                  <span>{isAuthenticated ? t('postReplyDepthHint') : t('postCommentLoginHint')}</span>
                   <button type="submit" disabled={!isAuthenticated || commentSubmitting || !commentInput.trim()}>
-                    {commentSubmitting ? 'Posting...' : 'Post comment'}
+                    {commentSubmitting ? t('postPosting') : t('postCommentButton')}
                   </button>
                 </div>
               </form>
 
               <div className="post-detail-comment-list">
                 {isCommentsLoading ? (
-                  <div className="post-detail-comment-empty">Loading comments...</div>
+                  <div className="post-detail-comment-empty">{t('postCommentsLoading')}</div>
                 ) : comments.length === 0 ? (
-                  <div className="post-detail-comment-empty">No comments yet. Start the conversation.</div>
+                  <div className="post-detail-comment-empty">{t('postNoComments')}</div>
                 ) : (
                   comments.map((comment) => (
                     <article key={comment.id} className="post-detail-comment-card">
@@ -689,7 +685,7 @@ function PostDetail() {
                           {comment.author?.profileImage ? (
                             <img
                               src={comment.author.profileImage}
-                              alt={comment.author?.name || 'User'}
+                              alt={comment.author?.name || t('cardUnknown')}
                               className="post-detail-comment-avatar"
                             />
                           ) : (
@@ -698,30 +694,30 @@ function PostDetail() {
                             </div>
                           )}
                           <div>
-                            <strong>{comment.author?.name || 'Unknown user'}</strong>
+                            <strong>{comment.author?.name || t('cardUnknown')}</strong>
                             <span>{formatDate(comment.createdAt)}</span>
                           </div>
                         </div>
                         <div className="post-detail-comment-meta">
-                          <span>{`Replies ${comment.replyCount || comment.replies?.length || 0}`}</span>
-                          <span>{`Likes ${comment.likeCount || 0}`}</span>
+                          <span>{`${t('postReplies')} ${comment.replyCount || comment.replies?.length || 0}`}</span>
+                          <span>{`${t('postLikes')} ${comment.likeCount || 0}`}</span>
                         </div>
                       </div>
 
                       <p className="post-detail-comment-body">
-                        {comment.isDeleted ? 'This comment has been deleted.' : comment.content}
+                        {comment.isDeleted ? t('postDeletedComment') : comment.content}
                       </p>
 
                       <div className="post-detail-comment-actions">
                         <button type="button" onClick={() => handleToggleReplies(comment)}>
-                          {replyOpenMap[comment.id] ? 'Hide replies' : 'View replies'}
+                          {replyOpenMap[comment.id] ? t('postHideReplies') : t('postViewReplies')}
                         </button>
                         {isAuthenticated && !comment.isDeleted && (
                           <button
                             type="button"
                             onClick={() => setReplyOpenMap((prev) => ({ ...prev, [comment.id]: true }))}
                           >
-                            Reply
+                            {t('postReply')}
                           </button>
                         )}
                       </div>
@@ -729,11 +725,11 @@ function PostDetail() {
                       {replyOpenMap[comment.id] && (
                         <div className="post-detail-reply-section">
                           {replyLoadingMap[comment.id] && !replyLoadedMap[comment.id] ? (
-                            <div className="post-detail-reply-empty">Loading replies...</div>
+                            <div className="post-detail-reply-empty">{t('postRepliesLoading')}</div>
                           ) : (
                             <div className="post-detail-reply-list">
                               {(comment.replies || []).length === 0 ? (
-                                <div className="post-detail-reply-empty">No replies yet.</div>
+                                <div className="post-detail-reply-empty">{t('postNoReplies')}</div>
                               ) : (
                                 (comment.replies || []).map((reply) => (
                                   <div key={reply.id} className="post-detail-reply-card">
@@ -741,7 +737,7 @@ function PostDetail() {
                                       {reply.author?.profileImage ? (
                                         <img
                                           src={reply.author.profileImage}
-                                          alt={reply.author?.name || 'User'}
+                                          alt={reply.author?.name || t('cardUnknown')}
                                           className="post-detail-comment-avatar"
                                         />
                                       ) : (
@@ -750,12 +746,12 @@ function PostDetail() {
                                         </div>
                                       )}
                                       <div>
-                                        <strong>{reply.author?.name || 'Unknown user'}</strong>
+                                        <strong>{reply.author?.name || t('cardUnknown')}</strong>
                                         <span>{formatDate(reply.createdAt)}</span>
                                       </div>
                                     </div>
                                     <p className="post-detail-comment-body">
-                                      {reply.isDeleted ? 'This reply has been deleted.' : reply.content}
+                                      {reply.isDeleted ? t('postDeletedReply') : reply.content}
                                     </p>
                                   </div>
                                 ))
@@ -772,14 +768,14 @@ function PostDetail() {
                                   ...prev,
                                   [comment.id]: event.target.value,
                                 }))}
-                                placeholder="Write a reply..."
+                                placeholder={t('postReplyPlaceholder')}
                               />
                               <button
                                 type="button"
                                 disabled={replyLoadingMap[comment.id] || !(replyInputs[comment.id] || '').trim()}
                                 onClick={() => handleSubmitReply(comment.id)}
                               >
-                                {replyLoadingMap[comment.id] ? 'Posting...' : 'Reply'}
+                                {replyLoadingMap[comment.id] ? t('postPosting') : t('postReply')}
                               </button>
                             </div>
                           )}
@@ -798,21 +794,21 @@ function PostDetail() {
         <div className="follow-modal-overlay" onClick={() => setFollowModalType(null)}>
           <div className="follow-modal-card" onClick={(event) => event.stopPropagation()}>
             <div className="follow-modal-header">
-              <h3>{followModalType === 'followers' ? 'Followers' : 'Following'}</h3>
+              <h3>{followModalType === 'followers' ? t('profileFollowers') : t('profileFollowing')}</h3>
               <button
                 type="button"
                 className="follow-modal-close"
                 onClick={() => setFollowModalType(null)}
               >
-                Close
+                {t('profileModalClose')}
               </button>
             </div>
 
             <div className="follow-modal-body">
               {isFollowListLoading ? (
-                <div className="follow-modal-empty">Loading...</div>
+                <div className="follow-modal-empty">{t('profileLoadingShort')}</div>
               ) : followUsers.length === 0 ? (
-                <div className="follow-modal-empty">No users found.</div>
+                <div className="follow-modal-empty">{t('profileNoUsers')}</div>
               ) : (
                 followUsers.map((followUser) => {
                   const isCurrentUser = String(followUser.id) === String(user?.id)
@@ -843,7 +839,7 @@ function PostDetail() {
                           className={`follow-user-button ${followUser.isFollowing ? 'following' : ''}`}
                           onClick={() => handleFollowUserFromList(followUser.id, !!followUser.isFollowing)}
                         >
-                          {followUser.isFollowing ? 'Following' : 'Follow'}
+                          {followUser.isFollowing ? t('postFollowing') : t('postFollow')}
                         </button>
                       )}
                     </div>

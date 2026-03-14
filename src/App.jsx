@@ -9,27 +9,30 @@ import PostList from './pages/PostList'
 import PostCreate from './pages/PostCreate'
 import PostDetail from './pages/PostDetail'
 import { AuthProvider } from './contexts/AuthProvider'
+import { LanguageProvider } from './contexts/LanguageContext'
 import { ThemeProvider } from './contexts/ThemeContext'
 import DmPage from './pages/DmPage'
 
 function App() {
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path='/' element={<Home />} />
-            <Route path='/login' element={<Login />} />
-            <Route path='/signup' element={<Signup />} />
-            <Route path='/oauth/callback' element={<OAuthCallback />} />
-            <Route path='/profile' element={<Profile />} />
-            <Route path='/posts' element={<PostList />} />
-            <Route path='/posts/create' element={<PostCreate />} />
-            <Route path='/posts/:id' element={<PostDetail />} />
-            <Route path='/dm' element={<DmPage />} />
-          </Routes>
-        </BrowserRouter>
-      </AuthProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path='/' element={<Home />} />
+              <Route path='/login' element={<Login />} />
+              <Route path='/signup' element={<Signup />} />
+              <Route path='/oauth/callback' element={<OAuthCallback />} />
+              <Route path='/profile' element={<Profile />} />
+              <Route path='/posts' element={<PostList />} />
+              <Route path='/posts/create' element={<PostCreate />} />
+              <Route path='/posts/:id' element={<PostDetail />} />
+              <Route path='/dm' element={<DmPage />} />
+            </Routes>
+          </BrowserRouter>
+        </AuthProvider>
+      </LanguageProvider>
     </ThemeProvider>
   )
 }

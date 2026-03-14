@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { useLanguage } from '../hooks/useLanguage'
 
 function PostCard({
   post,
@@ -14,6 +15,7 @@ function PostCard({
   onToggleFollow,
 }) {
   const navigate = useNavigate()
+  const { language, t } = useLanguage()
 
   const formatTime = (dateString) => {
     if (!dateString) return ''
@@ -25,19 +27,19 @@ function PostCard({
     const diffHour = Math.floor(diffMin / 60)
     const diffDay = Math.floor(diffHour / 24)
 
-    if (diffMin < 1) return 'Just now'
-    if (diffMin < 60) return `${diffMin}m ago`
-    if (diffHour < 24) return `${diffHour}h ago`
-    if (diffDay < 7) return `${diffDay}d ago`
+    if (diffMin < 1) return t('cardJustNow')
+    if (diffMin < 60) return `${diffMin}${t('cardMinAgoSuffix')}`
+    if (diffHour < 24) return `${diffHour}${t('cardHourAgoSuffix')}`
+    if (diffDay < 7) return `${diffDay}${t('cardDayAgoSuffix')}`
 
-    return date.toLocaleDateString('ko-KR')
+    return date.toLocaleDateString(language === 'ko' ? 'ko-KR' : 'en-US')
   }
 
   const previewContent = post.content?.length > 150
     ? `${post.content.substring(0, 150)}...`
     : post.content
 
-  const authorName = post.author?.name || post.userName || 'Unknown'
+  const authorName = post.author?.name || post.userName || t('cardUnknown')
   const authorImage = post.author?.profileImage || post.userProfileImage || null
   const authorId = post.author?.id || post.userId
   const postId = post.id || post.postId
@@ -136,7 +138,7 @@ function PostCard({
         <div className="post-card-thumbnail">
           <img
             src={post.thumbnailUrl || post.images[0]?.imageUrl || post.images[0]?.thumbnailUrl}
-            alt="Post"
+            alt={t('homeOpenPostDetails')}
           />
           {(post.imageCount > 1 || (post.images && post.images.length > 1)) && (
             <span className="post-card-image-count">
@@ -154,9 +156,9 @@ function PostCard({
             onClick={handleLikeClick}
             disabled={isLiking}
             aria-pressed={!!post.liked}
-            aria-label={isAuthenticated ? 'Toggle like' : 'Login required to like'}
+            aria-label={isAuthenticated ? t('cardToggleLike') : t('cardLoginLike')}
           >
-            {`Like ${post.likeCount || 0}`}
+            {`${t('postLike')} ${post.likeCount || 0}`}
           </button>
           <button
             type="button"
@@ -164,7 +166,7 @@ function PostCard({
             onClick={handleBookmarkClick}
             disabled={isBookmarkLoading}
           >
-            {isBookmarkLoading ? 'Saving...' : isBookmarked ? 'Saved' : 'Save'}
+            {isBookmarkLoading ? t('cardSaving') : isBookmarked ? t('cardSaved') : t('cardSave')}
           </button>
           {canStartDm && (
             <button
@@ -173,7 +175,7 @@ function PostCard({
               onClick={handleToggleFollow}
               disabled={isFollowLoading}
             >
-              {isFollowLoading ? 'Working...' : isFollowingAuthor ? 'Following' : 'Follow'}
+              {isFollowLoading ? t('cardWorking') : isFollowingAuthor ? t('cardFollowing') : t('cardFollow')}
             </button>
           )}
           {canStartDm && (
@@ -182,12 +184,12 @@ function PostCard({
               className="post-card-message-button"
               onClick={handleStartDm}
             >
-              Message
+              {t('cardMessage')}
             </button>
           )}
         </div>
-        <span className="post-card-stat">{`Comments ${post.commentCount || 0}`}</span>
-        <span className="post-card-stat">{`Views ${post.viewCount || 0}`}</span>
+        <span className="post-card-stat">{`${t('postComments')} ${post.commentCount || 0}`}</span>
+        <span className="post-card-stat">{`${t('postViews')} ${post.viewCount || 0}`}</span>
       </div>
     </article>
   )

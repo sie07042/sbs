@@ -1,17 +1,20 @@
 import './Footer.css'
+import { useLanguage } from '../hooks/useLanguage'
 
 function Footer() {
+  const { t } = useLanguage()
+
   return (
     <footer className="footer">
       <div className="footer-container">
         <div className="footer-content">
-          <p className="footer-text">© 2024 My Work. All rights reserved.</p>
+          <p className="footer-text">{t('footerCopyright')}</p>
           <div className="footer-links">
-            <a href="#" className="footer-link">Privacy Policy</a>
+            <a href="#" className="footer-link">{t('footerPrivacy')}</a>
             <span className="footer-separator">|</span>
-            <a href="#" className="footer-link">Terms of Service</a>
+            <a href="#" className="footer-link">{t('footerTerms')}</a>
             <span className="footer-separator">|</span>
-            <a href="#" className="footer-link">Contact</a>
+            <a href="#" className="footer-link">{t('footerContact')}</a>
           </div>
         </div>
       </div>

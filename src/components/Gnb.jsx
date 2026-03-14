@@ -1,23 +1,25 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import defaultUserImage from '../assets/default_user.png'
 import { useAuth } from '../hooks/useAuth'
+import { useLanguage } from '../hooks/useLanguage'
 import { useTheme } from '../hooks/useTheme'
 import './Gnb.css'
-import defaultUserImage from '../assets/default_user.png'
 
 function GNB() {
   const navigate = useNavigate()
   const location = useLocation()
   const { user, isAuthenticated, isLoading, logout } = useAuth()
   const { isDarkMode, toggleTheme } = useTheme()
+  const { t } = useLanguage()
 
   const handleLogout = async () => {
-    if (!window.confirm('Do you want to log out?')) {
+    if (!window.confirm(t('logoutConfirm'))) {
       return
     }
 
     try {
       await logout()
-      alert('Logged out.')
+      alert(t('logoutDone'))
       navigate('/')
     } catch (error) {
       console.error('Logout error:', error)
@@ -35,55 +37,57 @@ function GNB() {
 
           <div className="gnb-primary-links">
             <Link to="/" className={`gnb-menu-link ${location.pathname === '/' ? 'active' : ''}`}>
-              홈
+              {t('navHome')}
             </Link>
             <Link
               to="/posts"
               className={`gnb-menu-link ${location.pathname.startsWith('/posts') ? 'active' : ''}`}
             >
-              피드
+              {t('navFeed')}
             </Link>
             {isAuthenticated && (
               <Link
                 to="/dm"
                 className={`gnb-menu-link ${location.pathname.startsWith('/dm') ? 'active' : ''}`}
               >
-                DM
+                {t('navDm')}
               </Link>
             )}
           </div>
 
           <div className="gnb-right-actions">
             <button type="button" className="gnb-theme-toggle" onClick={toggleTheme}>
-              <span className="gnb-theme-toggle-icon">{isDarkMode ? '라이트' : '다크'}</span>
+              <span className="gnb-theme-toggle-icon">
+                {isDarkMode ? t('navLight') : t('navDark')}
+              </span>
             </button>
 
             {isLoading ? (
-              <span className="gnb-loading">불러오는 중...</span>
+              <span className="gnb-loading">{t('navLoading')}</span>
             ) : isAuthenticated ? (
               <>
                 <Link to="/profile" className="gnb-user-chip">
                   <img
                     src={user?.profileImage || defaultUserImage}
-                    alt="프로필"
+                    alt={t('navProfileAlt')}
                     className="gnb-user-avatar"
                   />
-                  <span className="gnb-user-name">{user?.name || '사용자'}</span>
+                  <span className="gnb-user-name">{user?.name || t('navUserFallback')}</span>
                 </Link>
                 <button onClick={handleLogout} className="gnb-menu-button" type="button">
-                  로그아웃
+                  {t('navLogout')}
                 </button>
               </>
             ) : (
               <>
                 <Link to="/login" className={`gnb-menu-link ${location.pathname === '/login' ? 'active' : ''}`}>
-                  로그인
+                  {t('navLogin')}
                 </Link>
                 <Link
                   to="/signup"
                   className={`gnb-menu-link gnb-signup-link ${location.pathname === '/signup' ? 'active' : ''}`}
                 >
-                  회원가입
+                  {t('navSignup')}
                 </Link>
               </>
             )}

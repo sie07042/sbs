@@ -5,10 +5,12 @@ import axios from 'axios'
 import Footer from '../components/Footer'
 import GNB from '../components/Gnb'
 import { useAuth } from '../hooks/useAuth'
+import { useLanguage } from '../hooks/useLanguage'
 import './Home.css'
 
 function Home() {
   const { isAuthenticated, accessToken, user } = useAuth()
+  const { t } = useLanguage()
   const [isLoading, setIsLoading] = useState(true)
   const [dashboard, setDashboard] = useState({
     rooms: [],
@@ -92,50 +94,50 @@ function Home() {
     if (!isAuthenticated) {
       items.push({
         id: 'guest',
-        title: 'Log in to unlock your activity board',
-        description: 'Track unread DMs, saved posts, and recent conversations in one place.',
+        title: t('homeGuestTitle'),
+        description: t('homeGuestDescription'),
         action: '/login',
-        actionLabel: 'Go to login',
+        actionLabel: t('homeGoLogin'),
       })
       return items
     }
 
     items.push({
       id: 'dm',
-      title: unreadDmCount > 0 ? `${unreadDmCount} unread messages waiting` : 'Your inbox is caught up',
+      title: unreadDmCount > 0 ? `${unreadDmCount}${t('homeUnreadTitleSuffix')}` : t('homeInboxCaughtUp'),
       description: unreadDmCount > 0
-        ? 'Jump back into recent conversations from the DM panel.'
-        : 'No unread DM right now, but your chat list is ready.',
+        ? t('homeUnreadDescription')
+        : t('homeDmQuietDescription'),
       action: '/dm',
-      actionLabel: 'Open DM',
+      actionLabel: t('homeOpenDm'),
     })
 
     items.push({
       id: 'bookmarks',
       title: dashboard.bookmarks.length > 0
-        ? `${dashboard.bookmarks.length} saved posts ready to revisit`
-        : 'Start saving posts you want to revisit',
+        ? `${dashboard.bookmarks.length}${t('homeSavedReadySuffix')}`
+        : t('homeSavedEmptyTitle'),
       description: dashboard.bookmarks.length > 0
-        ? 'Your latest bookmarked posts are waiting below.'
-        : 'Use the new save button in the feed to build your own collection.',
+        ? t('homeSavedDescription')
+        : t('homeSavedEmptyDescription'),
       action: '/posts',
-      actionLabel: 'Browse feed',
+      actionLabel: t('homeBrowseFeed'),
     })
 
     items.push({
       id: 'posts',
       title: dashboard.myPosts.length > 0
-        ? `${dashboard.myPosts.length} posts published so far`
-        : 'You have not posted yet',
+        ? `${dashboard.myPosts.length}${t('homePostsPublishedSuffix')}`
+        : t('homeNoPostsYet'),
       description: dashboard.myPosts.length > 0
-        ? 'Keep your profile moving with a fresh update today.'
-        : 'Share your first update and start building momentum.',
+        ? t('homePostsDescription')
+        : t('homeNoPostsDescription'),
       action: '/posts/create',
-      actionLabel: 'Create post',
+      actionLabel: t('homeCreatePost'),
     })
 
     return items
-  }, [dashboard.bookmarks.length, dashboard.myPosts.length, isAuthenticated, unreadDmCount])
+  }, [dashboard.bookmarks.length, dashboard.myPosts.length, isAuthenticated, t, unreadDmCount])
 
   return (
     <>
@@ -144,49 +146,48 @@ function Home() {
         <div className="home-shell">
           <section className="home-hero">
             <div className="home-hero-copy">
-              <span className="home-eyebrow">Activity Hub</span>
-              <h1>{isAuthenticated ? `${user?.name || 'Member'}, here is your live overview.` : 'See what matters at a glance.'}</h1>
+              <span className="home-eyebrow">{t('homeActivityHub')}</span>
+              <h1>{isAuthenticated ? `${user?.name || t('navUserFallback')}${t('homeOverviewUserSuffix')}` : t('homeOverviewGuest')}</h1>
               <p>
-                Build around the pieces your app already has: messages, saved posts, your own publishing flow,
-                and trending topics.
+                {t('homeHeroDescription')}
               </p>
             </div>
             <div className="home-hero-actions">
-              <Link to="/posts" className="home-primary-link">Open feed</Link>
+              <Link to="/posts" className="home-primary-link">{t('homeOpenFeed')}</Link>
               <Link to={isAuthenticated ? '/posts/create' : '/login'} className="home-secondary-link">
-                {isAuthenticated ? 'Create post' : 'Log in'}
+                {isAuthenticated ? t('homeCreatePost') : t('homeLogIn')}
               </Link>
             </div>
           </section>
 
           <section className="home-summary-grid">
             <article className="home-summary-card">
-              <span className="home-summary-label">Unread DM</span>
+              <span className="home-summary-label">{t('homeUnreadDm')}</span>
               <strong>{isAuthenticated ? unreadDmCount : '-'}</strong>
-              <p>Messages waiting for your reply.</p>
+              <p>{t('homeMessagesWaiting')}</p>
             </article>
             <article className="home-summary-card">
-              <span className="home-summary-label">Saved Posts</span>
+              <span className="home-summary-label">{t('homeSavedPosts')}</span>
               <strong>{isAuthenticated ? dashboard.bookmarks.length : '-'}</strong>
-              <p>Shortlist of posts you bookmarked.</p>
+              <p>{t('homeShortlist')}</p>
             </article>
             <article className="home-summary-card">
-              <span className="home-summary-label">My Posts</span>
+              <span className="home-summary-label">{t('homeMyPosts')}</span>
               <strong>{isAuthenticated ? dashboard.myPosts.length : '-'}</strong>
-              <p>Updates published from your account.</p>
+              <p>{t('homePublishedPosts')}</p>
             </article>
             <article className="home-summary-card">
-              <span className="home-summary-label">Trending Tags</span>
+              <span className="home-summary-label">{t('homeTrendingTags')}</span>
               <strong>{dashboard.trending.length}</strong>
-              <p>Topics with momentum right now.</p>
+              <p>{t('homeTopicsMomentum')}</p>
             </article>
           </section>
 
           <div className="home-grid">
             <section className="home-panel">
               <div className="home-panel-header">
-                <h2>Notifications</h2>
-                <span>{isLoading ? 'Syncing...' : 'Live summary'}</span>
+                <h2>{t('homeNotifications')}</h2>
+                <span>{isLoading ? t('homeSyncing') : t('homeLiveSummary')}</span>
               </div>
               <div className="home-alert-list">
                 {alertItems.map((item) => (
@@ -205,23 +206,23 @@ function Home() {
 
             <section className="home-panel">
               <div className="home-panel-header">
-                <h2>Saved Posts</h2>
-                <span>{isAuthenticated ? 'Recent bookmarks' : 'Login required'}</span>
+                <h2>{t('homeSavedPosts')}</h2>
+                <span>{isAuthenticated ? t('homeRecentBookmarks') : t('homeLoginRequired')}</span>
               </div>
               {!isAuthenticated ? (
                 <div className="home-empty-state">
-                  <p>Save posts from the feed and they will appear here.</p>
+                  <p>{t('homeSavedHint')}</p>
                 </div>
               ) : dashboard.bookmarks.length === 0 ? (
                 <div className="home-empty-state">
-                  <p>No bookmarks yet. Try the new save button in the feed.</p>
+                  <p>{t('homeNoBookmarks')}</p>
                 </div>
               ) : (
                 <div className="home-list">
                   {dashboard.bookmarks.map((bookmark) => (
                     <Link key={bookmark.postId || bookmark.id} to={`/posts/${bookmark.postId || bookmark.id}`} className="home-list-row">
-                      <strong>{bookmark.authorName || bookmark.userName || 'Saved post'}</strong>
-                      <span>{bookmark.content || 'Open post details'}</span>
+                      <strong>{bookmark.authorName || bookmark.userName || t('homeSavedFallback')}</strong>
+                      <span>{bookmark.content || t('homeOpenPostDetails')}</span>
                     </Link>
                   ))}
                 </div>
@@ -230,23 +231,23 @@ function Home() {
 
             <section className="home-panel">
               <div className="home-panel-header">
-                <h2>Inbox Snapshot</h2>
-                <span>{isAuthenticated ? 'Recent rooms' : 'Login required'}</span>
+                <h2>{t('homeInboxSnapshot')}</h2>
+                <span>{isAuthenticated ? t('homeRecentRooms') : t('homeLoginRequired')}</span>
               </div>
               {!isAuthenticated ? (
                 <div className="home-empty-state">
-                  <p>Log in to see unread messages and active conversations.</p>
+                  <p>{t('homeInboxHint')}</p>
                 </div>
               ) : dashboard.rooms.length === 0 ? (
                 <div className="home-empty-state">
-                  <p>No conversations yet. Start one from a post card or profile.</p>
+                  <p>{t('homeNoConversations')}</p>
                 </div>
               ) : (
                 <div className="home-list">
                   {dashboard.rooms.slice(0, 4).map((room) => (
                     <Link key={room.roomId || room.id} to="/dm" className="home-list-row">
-                      <strong>{room.peerUserName || room.name || 'Conversation'}</strong>
-                      <span>{room.lastMessagePreview || 'Open the conversation'}</span>
+                      <strong>{room.peerUserName || room.name || t('homeConversation')}</strong>
+                      <span>{room.lastMessagePreview || t('homeOpenConversation')}</span>
                     </Link>
                   ))}
                 </div>
@@ -255,12 +256,12 @@ function Home() {
 
             <section className="home-panel">
               <div className="home-panel-header">
-                <h2>Trending Hashtags</h2>
-                <span>What people are opening now</span>
+                <h2>{t('homeTrendingHeading')}</h2>
+                <span>{t('homeTrendingHint')}</span>
               </div>
               {dashboard.trending.length === 0 ? (
                 <div className="home-empty-state">
-                  <p>Trending topics will appear here once the feed data is available.</p>
+                  <p>{t('homeTrendingEmpty')}</p>
                 </div>
               ) : (
                 <div className="home-tag-grid">

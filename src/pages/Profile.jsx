@@ -6,13 +6,14 @@ import GNB from '../components/Gnb'
 import Footer from '../components/Footer'
 import ProfileImageSection from '../components/ProfileImageSection'
 import { useAuth } from '../hooks/useAuth'
+import { useLanguage } from '../hooks/useLanguage'
 import { useProfileForm } from '../hooks/useProfileForm'
-import { FORM_CONFIG } from '../config'
 import './Profile.css'
 
 function Profile() {
   const navigate = useNavigate()
   const { user, isAuthenticated, accessToken } = useAuth()
+  const { t, setLanguageByCountry } = useLanguage()
   const {
     formData,
     errors,
@@ -36,6 +37,12 @@ function Profile() {
       navigate('/login')
     }
   }, [isAuthenticated, navigate])
+
+  useEffect(() => {
+    if (formData.country) {
+      setLanguageByCountry(formData.country)
+    }
+  }, [formData.country, setLanguageByCountry])
 
   useEffect(() => {
     const fetchFollowCounts = async () => {
@@ -63,8 +70,16 @@ function Profile() {
   }, [accessToken, user?.id])
 
   const profileTitle = useMemo(() => (
-    formData.name?.trim() || user?.name || 'My Profile'
-  ), [formData.name, user?.name])
+    formData.name?.trim() || user?.name || t('profileMyProfile')
+  ), [formData.name, t, user?.name])
+
+  const countryOptions = useMemo(() => ([
+    { value: '1', label: t('country1') },
+    { value: '2', label: t('country2') },
+    { value: '3', label: t('country3') },
+    { value: '4', label: t('country4') },
+    { value: '5', label: t('country5') },
+  ]), [t])
 
   const fetchFollowUsers = async (type) => {
     if (!user?.id) {
@@ -87,7 +102,7 @@ function Profile() {
       setFollowModalType(type)
     } catch (error) {
       console.error(`Failed to load ${type}:`, error)
-      alert(error.response?.data?.message || 'Failed to load follow list.')
+      alert(error.response?.data?.message || t('profileFollowLoadFailed'))
     } finally {
       setIsFollowListLoading(false)
     }
@@ -95,7 +110,7 @@ function Profile() {
 
   const handleToggleFollowUser = async (targetUserId, currentlyFollowing) => {
     if (!accessToken) {
-      alert('Login is required to update follow status.')
+      alert(t('profileFollowUpdateLogin'))
       return
     }
 
@@ -118,7 +133,7 @@ function Profile() {
       )))
     } catch (error) {
       console.error('Failed to update follow status from profile:', error)
-      alert(error.response?.data?.message || 'Failed to update follow status.')
+      alert(error.response?.data?.message || t('postFollowFailed'))
     } finally {
       setFollowLoadingIds((prev) => prev.filter((id) => id !== targetUserId))
     }
@@ -131,13 +146,13 @@ function Profile() {
       const success = await submitProfile()
 
       if (success) {
-        alert('Profile updated.')
+        alert(t('profileUpdated'))
         navigate('/')
       } else {
-        alert('Failed to update profile.')
+        alert(t('profileUpdateFailed'))
       }
     } catch (error) {
-      const message = error.response?.data?.message || 'An error occurred while updating your profile.'
+      const message = error.response?.data?.message || t('profileUpdateError')
       alert(message)
     }
   }
@@ -152,9 +167,9 @@ function Profile() {
         <GNB />
         <div className="profile-container">
           <div className="profile-card">
-            <h1>Edit Profile</h1>
+            <h1>{t('profileEdit')}</h1>
             <div className="profile-loading">
-              <p>Loading your profile...</p>
+              <p>{t('profileLoading')}</p>
             </div>
           </div>
         </div>
@@ -170,9 +185,9 @@ function Profile() {
         <div className="profile-card">
           <section className="profile-summary-panel">
             <div className="profile-summary-copy">
-              <span className="profile-summary-eyebrow">Profile Studio</span>
+              <span className="profile-summary-eyebrow">{t('profileStudio')}</span>
               <h1>{profileTitle}</h1>
-              <p>Update your profile and keep an eye on your community from one place.</p>
+              <p>{t('profileDescription')}</p>
             </div>
 
             <div className="profile-summary-meta">
@@ -196,7 +211,7 @@ function Profile() {
                   onClick={() => fetchFollowUsers('followers')}
                 >
                   <strong>{followCounts.followerCount || 0}</strong>
-                  <span>Followers</span>
+                  <span>{t('profileFollowers')}</span>
                 </button>
                 <button
                   type="button"
@@ -204,7 +219,7 @@ function Profile() {
                   onClick={() => fetchFollowUsers('followings')}
                 >
                   <strong>{followCounts.followingCount || 0}</strong>
-                  <span>Following</span>
+                  <span>{t('profileFollowing')}</span>
                 </button>
               </div>
             </div>
@@ -218,38 +233,38 @@ function Profile() {
             />
 
             <FormField
-              label="Nickname"
+              label={t('profileNickname')}
               name="name"
               value={formData.name}
               onChange={handleChange}
               error={errors.name}
-              placeholder="Enter your nickname"
+              placeholder={t('profileNicknamePlaceholder')}
               required
             />
 
             <div className="form-row">
               <FormField
-                label="Last name"
+                label={t('profileLastName')}
                 name="lastName"
                 value={formData.lastName}
                 onChange={handleChange}
                 error={errors.lastName}
-                placeholder="Last name"
+                placeholder={t('profileLastName')}
                 half
               />
               <FormField
-                label="First name"
+                label={t('profileFirstName')}
                 name="firstName"
                 value={formData.firstName}
                 onChange={handleChange}
                 error={errors.firstName}
-                placeholder="First name"
+                placeholder={t('profileFirstName')}
                 half
               />
             </div>
 
             <FormField
-              label="Phone"
+              label={t('profilePhone')}
               name="phoneNumber"
               type="tel"
               value={formData.phoneNumber}
@@ -259,14 +274,14 @@ function Profile() {
             />
 
             <div className="form-group">
-              <label htmlFor="country">Country</label>
+              <label htmlFor="country">{t('profileCountry')}</label>
               <select
                 id="country"
                 name="country"
                 value={formData.country}
                 onChange={handleChange}
               >
-                {FORM_CONFIG.countries.map((country) => (
+                {countryOptions.map((country) => (
                   <option key={country.value} value={country.value}>
                     {country.label}
                   </option>
@@ -275,22 +290,22 @@ function Profile() {
             </div>
 
             <FormField
-              label="Address 1"
+              label={t('profileAddress1')}
               name="address1"
               value={formData.address1}
               onChange={handleChange}
-              placeholder="Primary address"
+              placeholder={t('profileAddress1Placeholder')}
             />
             <FormField
-              label="Address 2"
+              label={t('profileAddress2')}
               name="address2"
               value={formData.address2}
               onChange={handleChange}
-              placeholder="Apartment, suite, unit"
+              placeholder={t('profileAddress2Placeholder')}
             />
 
             <FormField
-              label="Birth date"
+              label={t('profileBirth')}
               name="birth"
               type="date"
               value={formData.birth}
@@ -304,14 +319,14 @@ function Profile() {
                 onClick={() => navigate(-1)}
                 disabled={isLoading}
               >
-                Cancel
+                {t('profileCancel')}
               </button>
               <button
                 type="submit"
                 className="submit-button"
                 disabled={isLoading}
               >
-                {isLoading ? 'Saving...' : 'Save profile'}
+                {isLoading ? t('profileSaving') : t('profileSave')}
               </button>
             </div>
           </form>
@@ -322,21 +337,21 @@ function Profile() {
         <div className="profile-follow-modal-overlay" onClick={() => setFollowModalType(null)}>
           <div className="profile-follow-modal-card" onClick={(event) => event.stopPropagation()}>
             <div className="profile-follow-modal-header">
-              <h3>{followModalType === 'followers' ? 'Followers' : 'Following'}</h3>
+              <h3>{followModalType === 'followers' ? t('profileFollowers') : t('profileFollowing')}</h3>
               <button
                 type="button"
                 className="profile-follow-modal-close"
                 onClick={() => setFollowModalType(null)}
               >
-                Close
+                {t('profileModalClose')}
               </button>
             </div>
 
             <div className="profile-follow-modal-body">
               {isFollowListLoading ? (
-                <div className="profile-follow-empty">Loading...</div>
+                <div className="profile-follow-empty">{t('profileLoadingShort')}</div>
               ) : followUsers.length === 0 ? (
-                <div className="profile-follow-empty">No users found.</div>
+                <div className="profile-follow-empty">{t('profileNoUsers')}</div>
               ) : (
                 followUsers.map((followUser) => {
                   const isCurrentUser = String(followUser.id) === String(user?.id)
@@ -369,7 +384,7 @@ function Profile() {
                           onClick={() => handleToggleFollowUser(followUser.id, !!followUser.isFollowing)}
                           disabled={isSaving}
                         >
-                          {isSaving ? 'Saving...' : followUser.isFollowing ? 'Following' : 'Follow'}
+                          {isSaving ? t('profileFollowSave') : followUser.isFollowing ? t('postFollowing') : t('postFollow')}
                         </button>
                       )}
                     </div>
