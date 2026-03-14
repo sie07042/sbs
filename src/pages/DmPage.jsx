@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import axios from 'axios'
 import GNB from '../components/Gnb'
 import Footer from '../components/Footer'
+import './DmPage.css'
 
 function DmPage() {
   const [rooms, setRooms] = useState([])
