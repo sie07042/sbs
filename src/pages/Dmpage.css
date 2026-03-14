@@ -15,7 +15,7 @@
   display: flex;
 }
 
-.dm-room-panel {
+.dm-room-panel { 
   width: 320px;
   border-right: 1px solid #e5e7eb;
   display: flex;
