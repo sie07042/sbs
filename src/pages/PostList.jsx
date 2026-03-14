@@ -32,7 +32,7 @@ function PostList() {
   const deferredHashtagInput = useDeferredValue(hashtagInput)
   const getPostId = (post) => post?.id || post?.postId
 
-  const { posts, isLoading, error, fetchPosts, updatePost } = usePosts(accessToken, {
+  const { posts, isLoading, error, fetchPosts, updatePost, deletePost } = usePosts(accessToken, {
     myPostsOnly: activeTab === 'mine',
   })
 
@@ -371,6 +371,32 @@ function PostList() {
     }
   }
 
+  const handleDeletePost = async (postId) => {
+    if (!postId) {
+      return
+    }
+
+    if (!window.confirm('이 게시글을 삭제할까요?')) {
+      return
+    }
+
+    const deleted = await deletePost(postId)
+
+    if (!deleted) {
+      return
+    }
+
+    if (selectedHashtag) {
+      setHashtagPosts((prev) => prev.filter((post) => getPostId(post) !== postId))
+    }
+
+    setBookmarkStateByPost((prev) => {
+      const next = { ...prev }
+      delete next[postId]
+      return next
+    })
+  }
+
   const isPostLoading = isLoading || isHashtagLoading
   const topAuthors = visiblePosts.slice(0, 4).map((post) => ({
     authorId: post.author?.id || post.userId,
@@ -569,9 +595,11 @@ function PostList() {
                       isBookmarkLoading={bookmarkLoadingIds.includes(postId)}
                       isFollowingAuthor={!!followStateByAuthor[post.author?.id || post.userId]}
                       isFollowLoading={followLoadingIds.includes(post.author?.id || post.userId)}
+                      canDelete={String(post.author?.id || post.userId) === String(user?.id)}
                       onToggleLike={handleToggleLike}
                       onToggleBookmark={handleToggleBookmark}
                       onToggleFollow={handleToggleFollow}
+                      onDeletePost={handleDeletePost}
                     />
                   )
                 })

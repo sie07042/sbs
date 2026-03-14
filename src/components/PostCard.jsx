@@ -10,8 +10,10 @@ function PostCard({
   isBookmarkLoading = false,
   onToggleLike,
   onToggleBookmark,
+  canDelete = false,
   isFollowingAuthor = false,
   isFollowLoading = false,
+  onDeletePost,
   onToggleFollow,
 }) {
   const navigate = useNavigate()
@@ -119,6 +121,14 @@ function PostCard({
     }
   }
 
+  const handleDeletePost = (event) => {
+    stopEvent(event)
+
+    if (onDeletePost && postId) {
+      onDeletePost(postId)
+    }
+  }
+
   const visibilityIcon = post.visibility === 'PRIVATE'
     ? '🔒'
     : post.visibility === 'FOLLOWERS_ONLY'
@@ -158,6 +168,15 @@ function PostCard({
           <span className="post-card-visibility-badge" title={post.visibility || 'PUBLIC'}>
             {visibilityIcon}
           </span>
+          {canDelete && (
+            <button
+              type="button"
+              className="post-card-inline-chip delete"
+              onClick={handleDeletePost}
+            >
+              {t('postDelete', '\uc0ad\uc81c')}
+            </button>
+          )}
           {canStartDm && (
             <div className="post-card-inline-tools">
               <button

@@ -100,7 +100,7 @@ export function usePosts(accessToken, { myPostsOnly = false } = {}) {
       });
 
       // 목록에서 삭제된 게시글 제거
-      setPosts(prev => prev.filter(post => post.id !== postId));
+      setPosts(prev => prev.filter(post => getPostId(post) !== postId));
       return true;
     } catch (err) {
       console.error('게시글 삭제 실패:', err);
@@ -111,7 +111,7 @@ export function usePosts(accessToken, { myPostsOnly = false } = {}) {
 
   const updatePost = (postId, updater) => {
     setPosts(prev => prev.map(post => (
-      post.id === postId
+      getPostId(post) === postId
         ? (typeof updater === 'function' ? updater(post) : { ...post, ...updater })
         : post
     )));
@@ -129,3 +129,4 @@ export function usePosts(accessToken, { myPostsOnly = false } = {}) {
     updatePost,
   };
 }
+  const getPostId = (post) => post?.id || post?.postId;

@@ -51,6 +51,7 @@ function DmPage() {
   const [hasLoadedRooms, setHasLoadedRooms] = useState(false)
   const messageEndRef = useRef(null)
   const selectedRoomIdRef = useRef(null)
+  const hasInitializedRef = useRef(false)
 
   const requestedUserId = searchParams.get('userId')
   const requestedUserName = searchParams.get('name')
@@ -325,6 +326,12 @@ function DmPage() {
       navigate('/login', { replace: true })
       return
     }
+
+    if (hasInitializedRef.current) {
+      return
+    }
+
+    hasInitializedRef.current = true
 
     const initializeDmPage = async () => {
       const roomList = await fetchRooms({

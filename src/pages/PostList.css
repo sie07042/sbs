@@ -501,6 +501,11 @@
   color: #c17a02;
 }
 
+.post-card-inline-chip.delete {
+  background: color-mix(in srgb, var(--danger) 14%, var(--surface-strong));
+  color: var(--danger);
+}
+
 .post-card-metric {
   min-height: 36px;
   display: inline-flex;
