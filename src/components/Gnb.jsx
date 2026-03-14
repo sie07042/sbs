@@ -1,7 +1,9 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+
 import defaultUserImage from '../assets/default_user.png'
 import { useAuth } from '../hooks/useAuth'
 import { useLanguage } from '../hooks/useLanguage'
+import { useNotifications } from '../hooks/useNotifications'
 import { useTheme } from '../hooks/useTheme'
 import './Gnb.css'
 
@@ -11,6 +13,7 @@ function GNB() {
   const { user, isAuthenticated, isLoading, logout } = useAuth()
   const { isDarkMode, toggleTheme } = useTheme()
   const { t } = useLanguage()
+  const { unreadCount } = useNotifications()
 
   const handleLogout = async () => {
     if (!window.confirm(t('logoutConfirm'))) {
@@ -47,6 +50,19 @@ function GNB() {
             </Link>
             {isAuthenticated && (
               <Link
+                to="/notifications"
+                className={`gnb-menu-link gnb-menu-link-with-badge ${
+                  location.pathname.startsWith('/notifications') ? 'active' : ''
+                }`}
+              >
+                <span>{t('navNotifications', '\uc54c\ub9bc')}</span>
+                {unreadCount > 0 && (
+                  <span className="gnb-badge">{unreadCount > 99 ? '99+' : unreadCount}</span>
+                )}
+              </Link>
+            )}
+            {isAuthenticated && (
+              <Link
                 to="/dm"
                 className={`gnb-menu-link ${location.pathname.startsWith('/dm') ? 'active' : ''}`}
               >
@@ -80,12 +96,17 @@ function GNB() {
               </>
             ) : (
               <>
-                <Link to="/login" className={`gnb-menu-link ${location.pathname === '/login' ? 'active' : ''}`}>
+                <Link
+                  to="/login"
+                  className={`gnb-menu-link ${location.pathname === '/login' ? 'active' : ''}`}
+                >
                   {t('navLogin')}
                 </Link>
                 <Link
                   to="/signup"
-                  className={`gnb-menu-link gnb-signup-link ${location.pathname === '/signup' ? 'active' : ''}`}
+                  className={`gnb-menu-link gnb-signup-link ${
+                    location.pathname === '/signup' ? 'active' : ''
+                  }`}
                 >
                   {t('navSignup')}
                 </Link>

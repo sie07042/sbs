@@ -86,9 +86,12 @@
 }
 
 .dm-room-item {
+  width: 100%;
+  text-align: left;
   padding: 16px 18px;
   margin-bottom: 8px;
   border: 1px solid transparent;
+  background: transparent;
   border-radius: 20px;
   cursor: pointer;
   position: relative;

@@ -73,6 +73,25 @@
   cursor: pointer;
 }
 
+.gnb-menu-link-with-badge {
+  gap: 0.45rem;
+}
+
+.gnb-badge {
+  min-width: 1.4rem;
+  height: 1.4rem;
+  padding: 0 0.38rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--brand), #5ac8ff);
+  color: white;
+  font-size: 0.72rem;
+  font-weight: 800;
+  box-shadow: 0 8px 18px rgba(29, 155, 240, 0.26);
+}
+
 .gnb-menu-link:hover,
 .gnb-menu-button:hover,
 .gnb-theme-toggle:hover,
