@@ -576,6 +576,21 @@
   cursor: default;
 }
 
+.post-card-inline-lock {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: auto;
+  padding: 0 0.1rem;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  color: var(--text);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: default;
+}
+
 .post-card-inline-chip.active {
   background: color-mix(in srgb, var(--success) 14%, #fff3d6);
   color: #b86a00;

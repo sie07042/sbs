@@ -28,19 +28,25 @@ function PostList() {
   const [followLoadingIds, setFollowLoadingIds] = useState([])
   const [bookmarkStateByPost, setBookmarkStateByPost] = useState({})
   const [bookmarkLoadingIds, setBookmarkLoadingIds] = useState([])
+  const [ownPostIds, setOwnPostIds] = useState(() => new Set())
   const deferredSearch = useDeferredValue(searchInput)
   const deferredHashtagInput = useDeferredValue(hashtagInput)
   const getPostId = (post) => post?.id || post?.postId
   const getAuthorId = (post) => post?.author?.id || post?.userId
   const getAuthorName = (post) => post?.author?.name || post?.userName || ''
   const isOwnPost = (post) => {
+    const postId = getPostId(post)
     const authorId = getAuthorId(post)
+
+    if (postId && ownPostIds.has(String(postId))) {
+      return true
+    }
 
     if (authorId && user?.id) {
       return String(authorId) === String(user.id)
     }
 
-    return !!(user?.name && getAuthorName(post) && user.name === getAuthorName(post))
+    return false
   }
 
   const { posts, isLoading, error, fetchPosts, updatePost, deletePost } = usePosts(accessToken, {
@@ -166,6 +172,32 @@ function PostList() {
 
     return sortedPosts
   }, [basePosts, normalizedQuery, sortBy])
+
+  useEffect(() => {
+    if (!isAuthenticated || !accessToken) {
+      setOwnPostIds(new Set())
+      return
+    }
+
+    const fetchOwnPostIds = async () => {
+      try {
+        const response = await axios.get('/api/posts/me?page=0&size=100', {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+          withCredentials: true,
+        })
+
+        const content = response.data?.data?.content || []
+        setOwnPostIds(new Set(content.map((post) => String(getPostId(post))).filter(Boolean)))
+      } catch (err) {
+        console.error('Failed to fetch my post ids:', err)
+        setOwnPostIds(new Set())
+      }
+    }
+
+    fetchOwnPostIds()
+  }, [accessToken, isAuthenticated])
 
   useEffect(() => {
     if (!isAuthenticated || !accessToken) return
@@ -431,7 +463,7 @@ function PostList() {
     })
 
     return Array.from(authorMap.values()).slice(0, 4)
-  }, [user?.id, user?.name, visiblePosts])
+  }, [ownPostIds, user?.id, visiblePosts])
 
   return (
     <>

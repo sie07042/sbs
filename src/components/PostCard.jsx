@@ -132,10 +132,10 @@ function PostCard({
   }
 
   const visibilityIcon = post.visibility === 'PRIVATE'
-    ? '🔒'
+    ? '🔒︎'
     : post.visibility === 'FOLLOWERS_ONLY'
-      ? '👥'
-      : '🔓'
+      ? '🔐︎'
+      : '🔓︎'
 
   return (
     <article
@@ -208,7 +208,7 @@ function PostCard({
           <span className="post-card-time">{formatTime(post.createdAt)}</span>
           <div className="post-card-inline-tools">
             <span
-              className="post-card-inline-chip icon"
+              className="post-card-inline-lock"
               title={post.visibility || 'PUBLIC'}
             >
               {visibilityIcon}
