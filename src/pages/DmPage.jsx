@@ -50,6 +50,7 @@ function DmPage() {
   const [isStartingRoom, setIsStartingRoom] = useState(false)
   const [hasLoadedRooms, setHasLoadedRooms] = useState(false)
   const messageEndRef = useRef(null)
+  const selectedRoomIdRef = useRef(null)
 
   const requestedUserId = searchParams.get('userId')
   const requestedUserName = searchParams.get('name')
@@ -64,6 +65,10 @@ function DmPage() {
     [rooms, selectedRoomId]
   )
 
+  useEffect(() => {
+    selectedRoomIdRef.current = selectedRoomId
+  }, [selectedRoomId])
+
   const findRoomByPeerUserId = useCallback((roomList, peerUserId) => {
     if (!peerUserId) {
       return null
@@ -76,6 +81,7 @@ function DmPage() {
 
   const syncRoomSelection = useCallback((roomList, options = {}) => {
     setSelectedRoomId((currentRoomId) => {
+      const stableCurrentRoomId = options.currentRoomId ?? selectedRoomIdRef.current ?? currentRoomId
       const preferredRoom = roomList.find((room) => room.roomId === options.preferredRoomId)
       const preferredPeerRoom = findRoomByPeerUserId(roomList, options.preferredPeerUserId)
 
@@ -87,8 +93,8 @@ function DmPage() {
         return preferredPeerRoom.roomId
       }
 
-      if (options.preserveSelection !== false && currentRoomId) {
-        const existingRoom = roomList.find((room) => room.roomId === currentRoomId)
+      if (options.preserveSelection !== false && stableCurrentRoomId) {
+        const existingRoom = roomList.find((room) => room.roomId === stableCurrentRoomId)
         if (existingRoom) {
           return existingRoom.roomId
         }
@@ -97,6 +103,11 @@ function DmPage() {
       return roomList[0]?.roomId || null
     })
   }, [findRoomByPeerUserId])
+
+  const handleSelectRoom = useCallback((roomId) => {
+    selectedRoomIdRef.current = roomId
+    setSelectedRoomId(roomId)
+  }, [])
 
   const fetchRooms = useCallback(async (options = {}) => {
     const shouldShowLoading = !options.silent && !hasLoadedRooms
@@ -210,7 +221,7 @@ function DmPage() {
 
     const existingRoom = findRoomByPeerUserId(roomList, targetUserId)
     if (existingRoom) {
-      setSelectedRoomId(existingRoom.roomId)
+      handleSelectRoom(existingRoom.roomId)
       navigate('/dm', { replace: true })
       return
     }
@@ -243,7 +254,7 @@ function DmPage() {
         || findRoomByPeerUserId(refreshedRooms, targetUserId)
 
       if (nextRoom?.roomId) {
-        setSelectedRoomId(nextRoom.roomId)
+        handleSelectRoom(nextRoom.roomId)
       }
 
       navigate('/dm', { replace: true })
@@ -253,7 +264,7 @@ function DmPage() {
     } finally {
       setIsStartingRoom(false)
     }
-  }, [authHeaders, fetchRooms, findRoomByPeerUserId, isAuthenticated, navigate, rooms, user?.id])
+  }, [authHeaders, fetchRooms, findRoomByPeerUserId, handleSelectRoom, isAuthenticated, navigate, rooms, user?.id])
 
   const handleSendMessage = async (event) => {
     event.preventDefault()
@@ -344,11 +355,17 @@ function DmPage() {
     }
 
     const interval = setInterval(() => {
-      fetchMessages(selectedRoomId, { silent: true })
+      const currentRoomId = selectedRoomIdRef.current
+
+      if (!currentRoomId) {
+        return
+      }
+
+      fetchMessages(currentRoomId, { silent: true })
       fetchRooms({
-        preferredRoomId: selectedRoomId,
         preserveSelection: true,
         silent: true,
+        currentRoomId,
       })
     }, 5000)
 
@@ -404,7 +421,7 @@ function DmPage() {
                     key={room.roomId}
                     type="button"
                     className={`dm-room-item ${selectedRoomId === room.roomId ? 'active' : ''}`}
-                    onClick={() => setSelectedRoomId(room.roomId)}
+                    onClick={() => handleSelectRoom(room.roomId)}
                   >
                     <div className="dm-room-name">{room.peerUserName || TEXT.unknownUser}</div>
                     <div className="dm-room-preview">{room.lastMessagePreview || TEXT.startConversation}</div>

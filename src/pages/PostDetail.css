@@ -316,6 +316,15 @@
   font-weight: 700;
 }
 
+.post-detail-comment-delete {
+  background: color-mix(in srgb, var(--danger) 14%, var(--surface-strong));
+  color: var(--danger);
+}
+
+.post-detail-comment-actions.reply {
+  justify-content: flex-end;
+}
+
 .post-detail-comment-form-footer button,
 .post-detail-reply-form button {
   background: color-mix(in srgb, var(--brand) 16%, var(--surface-strong));

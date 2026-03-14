@@ -36,6 +36,7 @@ function PostDetail() {
   const [replyLoadingMap, setReplyLoadingMap] = useState({})
   const [replyLoadedMap, setReplyLoadedMap] = useState({})
   const [commentSubmitting, setCommentSubmitting] = useState(false)
+  const [deletingCommentIds, setDeletingCommentIds] = useState([])
 
   const authHeaders = useMemo(
     () => (accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined),
@@ -196,6 +197,15 @@ function PostDetail() {
       }
     }))
   }
+
+  const isOwnedComment = (commentAuthor) => !!(
+    user &&
+    commentAuthor &&
+    (
+      String(user.id) === String(commentAuthor.id) ||
+      user.email === commentAuthor.email
+    )
+  )
 
   const handleDelete = async () => {
     if (!window.confirm(t('postDeleteConfirm'))) {
@@ -516,6 +526,45 @@ function PostDetail() {
     }
   }
 
+  const handleDeleteComment = async (commentId) => {
+    if (!accessToken || deletingCommentIds.includes(commentId)) {
+      return
+    }
+
+    if (!window.confirm(t('postDeleteCommentConfirm', '이 댓글을 삭제할까요?'))) {
+      return
+    }
+
+    try {
+      setDeletingCommentIds((prev) => [...prev, commentId])
+
+      await axios.delete(`/api/comments/${commentId}`, {
+        headers: authHeaders,
+        withCredentials: true,
+      })
+
+      updateCommentInTree(commentId, (comment) => ({
+        ...comment,
+        isDeleted: true,
+        content: '',
+      }))
+
+      setPost((prev) => (
+        prev
+          ? {
+              ...prev,
+              commentCount: Math.max(0, (prev.commentCount || 0) - 1),
+            }
+          : prev
+      ))
+    } catch (err) {
+      console.error('Failed to delete comment:', err)
+      alert(err.response?.data?.message || t('postDeleteCommentFailed', '댓글 삭제에 실패했습니다.'))
+    } finally {
+      setDeletingCommentIds((prev) => prev.filter((id) => id !== commentId))
+    }
+  }
+
   const visibilityLabel = post?.visibility === 'PRIVATE'
     ? t('postPrivate')
     : post?.visibility === 'FOLLOWERS_ONLY'
@@ -720,6 +769,18 @@ function PostDetail() {
                             {t('postReply')}
                           </button>
                         )}
+                        {isOwnedComment(comment.author) && !comment.isDeleted && (
+                          <button
+                            type="button"
+                            className="post-detail-comment-delete"
+                            onClick={() => handleDeleteComment(comment.id)}
+                            disabled={deletingCommentIds.includes(comment.id)}
+                          >
+                            {deletingCommentIds.includes(comment.id)
+                              ? t('postWorking')
+                              : t('postDelete', '삭제')}
+                          </button>
+                        )}
                       </div>
 
                       {replyOpenMap[comment.id] && (
@@ -753,6 +814,20 @@ function PostDetail() {
                                     <p className="post-detail-comment-body">
                                       {reply.isDeleted ? t('postDeletedReply') : reply.content}
                                     </p>
+                                    {isOwnedComment(reply.author) && !reply.isDeleted && (
+                                      <div className="post-detail-comment-actions reply">
+                                        <button
+                                          type="button"
+                                          className="post-detail-comment-delete"
+                                          onClick={() => handleDeleteComment(reply.id)}
+                                          disabled={deletingCommentIds.includes(reply.id)}
+                                        >
+                                          {deletingCommentIds.includes(reply.id)
+                                            ? t('postWorking')
+                                            : t('postDelete', '삭제')}
+                                        </button>
+                                      </div>
+                                    )}
                                   </div>
                                 ))
                               )}
