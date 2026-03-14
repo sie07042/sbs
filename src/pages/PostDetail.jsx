@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import axios from 'axios'
 
@@ -35,9 +35,10 @@ function PostDetail() {
   const [replyLoadedMap, setReplyLoadedMap] = useState({})
   const [commentSubmitting, setCommentSubmitting] = useState(false)
 
-  const authHeaders = accessToken
-    ? { Authorization: `Bearer ${accessToken}` }
-    : undefined
+  const authHeaders = useMemo(
+    () => (accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined),
+    [accessToken]
+  )
 
   const formatDate = (dateString) => {
     if (!dateString) return ''
