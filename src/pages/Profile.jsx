@@ -12,7 +12,7 @@ import './Profile.css'
 
 function Profile() {
   const navigate = useNavigate()
-  const { user, isAuthenticated, accessToken } = useAuth()
+  const { user, isAuthenticated, accessToken, updateUser } = useAuth()
   const { t, setLanguageByCountry } = useLanguage()
   const {
     formData,
@@ -31,6 +31,7 @@ function Profile() {
   const [followUsers, setFollowUsers] = useState([])
   const [isFollowListLoading, setIsFollowListLoading] = useState(false)
   const [followLoadingIds, setFollowLoadingIds] = useState([])
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -53,9 +54,7 @@ function Profile() {
       try {
         const response = await axios.get(`/api/users/${user.id}/follow/count`, {
           headers: accessToken
-            ? {
-                Authorization: `Bearer ${accessToken}`,
-              }
+            ? { Authorization: `Bearer ${accessToken}` }
             : undefined,
           withCredentials: true,
         })
@@ -69,9 +68,10 @@ function Profile() {
     fetchFollowCounts()
   }, [accessToken, user?.id])
 
-  const profileTitle = useMemo(() => (
-    formData.name?.trim() || user?.name || t('profileMyProfile')
-  ), [formData.name, t, user?.name])
+  const profileTitle = useMemo(
+    () => formData.name?.trim() || user?.name || t('profileMyProfile'),
+    [formData.name, t, user?.name]
+  )
 
   const countryOptions = useMemo(() => ([
     { value: '1', label: t('country1') },
@@ -91,9 +91,7 @@ function Profile() {
 
       const response = await axios.get(`/api/users/${user.id}/${type}?page=0&size=30`, {
         headers: accessToken
-          ? {
-              Authorization: `Bearer ${accessToken}`,
-            }
+          ? { Authorization: `Bearer ${accessToken}` }
           : undefined,
         withCredentials: true,
       })
@@ -139,18 +137,25 @@ function Profile() {
     }
   }
 
-  const handleSubmit = async (event) => {
-    event.preventDefault()
-
+  const handleSaveProfile = async () => {
     try {
-      const success = await submitProfile()
+      const result = await submitProfile()
 
-      if (success) {
-        alert(t('profileUpdated'))
-        navigate('/')
-      } else {
+      if (!result?.success) {
         alert(t('profileUpdateFailed'))
+        return
       }
+
+      updateUser({
+        ...user,
+        ...result.user,
+        name: result.user?.name || formData.name,
+        profileImage: result.user?.profileImage || result.user?.profileImageUrl || previewImage || user?.profileImage,
+        bgImage: result.user?.bgImage || previewBackground || user?.bgImage,
+      })
+
+      alert(t('profileUpdated'))
+      setIsEditModalOpen(false)
     } catch (error) {
       const message = error.response?.data?.message || t('profileUpdateError')
       alert(message)
@@ -182,12 +187,29 @@ function Profile() {
     <>
       <GNB />
       <div className="profile-container">
-        <div className="profile-card">
+        <div className="profile-card profile-card-modern">
           <section className="profile-summary-panel">
             <div className="profile-summary-copy">
               <span className="profile-summary-eyebrow">{t('profileStudio')}</span>
               <h1>{profileTitle}</h1>
               <p>{t('profileDescription')}</p>
+              <div className="profile-summary-actions">
+                <button
+                  type="button"
+                  className="profile-action-button primary"
+                  onClick={() => setIsEditModalOpen(true)}
+                >
+                  {t('profileEdit')}
+                </button>
+                <button
+                  type="button"
+                  className="profile-action-button"
+                  onClick={handleSaveProfile}
+                  disabled={isLoading}
+                >
+                  {isLoading ? t('profileSaving') : t('profileSave')}
+                </button>
+              </div>
             </div>
 
             <div className="profile-summary-meta">
@@ -225,113 +247,143 @@ function Profile() {
             </div>
           </section>
 
-          <form onSubmit={handleSubmit} className="profile-form">
+          <section className="profile-media-panel">
+            <div className="profile-panel-header">
+              <div>
+                <span className="profile-panel-kicker">MEDIA</span>
+                <h2>Profile visuals</h2>
+              </div>
+              <p>배경 이미지와 프로필 사진을 한 곳에서 바꿀 수 있어요.</p>
+            </div>
             <ProfileImageSection
               previewImage={previewImage}
               previewBackground={previewBackground}
               onImageSelect={handleImageSelect}
             />
+          </section>
+        </div>
+      </div>
 
-            <FormField
-              label={t('profileNickname')}
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              error={errors.name}
-              placeholder={t('profileNicknamePlaceholder')}
-              required
-            />
-
-            <div className="form-row">
-              <FormField
-                label={t('profileLastName')}
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleChange}
-                error={errors.lastName}
-                placeholder={t('profileLastName')}
-                half
-              />
-              <FormField
-                label={t('profileFirstName')}
-                name="firstName"
-                value={formData.firstName}
-                onChange={handleChange}
-                error={errors.firstName}
-                placeholder={t('profileFirstName')}
-                half
-              />
-            </div>
-
-            <FormField
-              label={t('profilePhone')}
-              name="phoneNumber"
-              type="tel"
-              value={formData.phoneNumber}
-              onChange={handleChange}
-              error={errors.phoneNumber}
-              placeholder="010-1234-5678"
-            />
-
-            <div className="form-group">
-              <label htmlFor="country">{t('profileCountry')}</label>
-              <select
-                id="country"
-                name="country"
-                value={formData.country}
-                onChange={handleChange}
-              >
-                {countryOptions.map((country) => (
-                  <option key={country.value} value={country.value}>
-                    {country.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <FormField
-              label={t('profileAddress1')}
-              name="address1"
-              value={formData.address1}
-              onChange={handleChange}
-              placeholder={t('profileAddress1Placeholder')}
-            />
-            <FormField
-              label={t('profileAddress2')}
-              name="address2"
-              value={formData.address2}
-              onChange={handleChange}
-              placeholder={t('profileAddress2Placeholder')}
-            />
-
-            <FormField
-              label={t('profileBirth')}
-              name="birth"
-              type="date"
-              value={formData.birth}
-              onChange={handleChange}
-            />
-
-            <div className="button-group">
+      {isEditModalOpen && (
+        <div className="profile-edit-modal-overlay" onClick={() => setIsEditModalOpen(false)}>
+          <div className="profile-edit-modal-card" onClick={(event) => event.stopPropagation()}>
+            <div className="profile-edit-modal-header">
+              <div>
+                <span className="profile-panel-kicker">EDIT</span>
+                <h3>{t('profileEdit')}</h3>
+              </div>
               <button
                 type="button"
-                className="cancel-button"
-                onClick={() => navigate(-1)}
+                className="profile-edit-modal-close"
+                onClick={() => setIsEditModalOpen(false)}
+              >
+                {t('profileModalClose')}
+              </button>
+            </div>
+
+            <div className="profile-edit-modal-body">
+              <FormField
+                label={t('profileNickname')}
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                error={errors.name}
+                placeholder={t('profileNicknamePlaceholder')}
+                required
+              />
+
+              <div className="form-row">
+                <FormField
+                  label={t('profileLastName')}
+                  name="lastName"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  error={errors.lastName}
+                  placeholder={t('profileLastName')}
+                  half
+                />
+                <FormField
+                  label={t('profileFirstName')}
+                  name="firstName"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  error={errors.firstName}
+                  placeholder={t('profileFirstName')}
+                  half
+                />
+              </div>
+
+              <FormField
+                label={t('profilePhone')}
+                name="phoneNumber"
+                type="tel"
+                value={formData.phoneNumber}
+                onChange={handleChange}
+                error={errors.phoneNumber}
+                placeholder="010-1234-5678"
+              />
+
+              <div className="form-group">
+                <label htmlFor="country">{t('profileCountry')}</label>
+                <select
+                  id="country"
+                  name="country"
+                  value={formData.country}
+                  onChange={handleChange}
+                >
+                  {countryOptions.map((country) => (
+                    <option key={country.value} value={country.value}>
+                      {country.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <FormField
+                label={t('profileAddress1')}
+                name="address1"
+                value={formData.address1}
+                onChange={handleChange}
+                placeholder={t('profileAddress1Placeholder')}
+              />
+              <FormField
+                label={t('profileAddress2')}
+                name="address2"
+                value={formData.address2}
+                onChange={handleChange}
+                placeholder={t('profileAddress2Placeholder')}
+              />
+
+              <FormField
+                label={t('profileBirth')}
+                name="birth"
+                type="date"
+                value={formData.birth}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="profile-edit-modal-footer">
+              <button
+                type="button"
+                className="profile-action-button"
+                onClick={() => setIsEditModalOpen(false)}
                 disabled={isLoading}
               >
                 {t('profileCancel')}
               </button>
               <button
-                type="submit"
-                className="submit-button"
+                type="button"
+                className="profile-action-button primary"
+                onClick={handleSaveProfile}
                 disabled={isLoading}
               >
                 {isLoading ? t('profileSaving') : t('profileSave')}
               </button>
             </div>
-          </form>
+          </div>
         </div>
-      </div>
+      )}
 
       {followModalType && (
         <div className="profile-follow-modal-overlay" onClick={() => setFollowModalType(null)}>

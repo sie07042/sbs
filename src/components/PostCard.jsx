@@ -47,6 +47,8 @@ function PostCard({
   const postId = post.id || post.postId
   const canStartDm = isAuthenticated && authorId && String(authorId) !== String(currentUserId)
   const authorHandle = authorName.replace(/\s+/g, '').toLowerCase() || 'user'
+  const followerCount = post.author?.followerCount || post.followerCount || 0
+  const followingCount = post.author?.followingCount || post.followingCount || 0
 
   const handleMoveToDetail = () => {
     if (!postId) {
@@ -149,7 +151,7 @@ function PostCard({
       tabIndex={0}
     >
       <div className="post-card-header">
-        <div className="post-card-author">
+        <div className="post-card-author post-card-author-hoverable">
           {authorImage ? (
             <img src={authorImage} alt={authorName} className="post-card-avatar" />
           ) : (
@@ -161,41 +163,85 @@ function PostCard({
             <span className="post-card-author-name">{authorName}</span>
             <span className="post-card-author-handle">@{authorHandle}</span>
           </div>
+
+          <div className="post-card-profile-popover">
+            <div className="post-card-profile-top">
+              {authorImage ? (
+                <img src={authorImage} alt={authorName} className="post-card-profile-avatar" />
+              ) : (
+                <div className="post-card-profile-avatar placeholder">{authorName.charAt(0)}</div>
+              )}
+              <div className="post-card-profile-copy">
+                <strong>{authorName}</strong>
+                <span>@{authorHandle}</span>
+              </div>
+            </div>
+            <div className="post-card-profile-stats">
+              <span>{t('profileFollowers')} {followerCount}</span>
+              <span>{t('profileFollowing')} {followingCount}</span>
+            </div>
+            <div className="post-card-profile-actions">
+              {canStartDm && (
+                <>
+                  <button
+                    type="button"
+                    className={`post-card-inline-chip ${isFollowingAuthor ? 'active' : ''}`}
+                    onClick={handleToggleFollow}
+                    disabled={isFollowLoading}
+                  >
+                    {isFollowLoading ? t('cardWorking') : isFollowingAuthor ? t('cardFollowing') : t('cardFollow')}
+                  </button>
+                  <button
+                    type="button"
+                    className="post-card-inline-chip"
+                    onClick={handleStartDm}
+                  >
+                    {t('cardMessage')}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="post-card-header-side">
           <span className="post-card-time">{formatTime(post.createdAt)}</span>
-          <span className="post-card-visibility-badge" title={post.visibility || 'PUBLIC'}>
-            {visibilityIcon}
-          </span>
-          {canDelete && (
-            <button
-              type="button"
-              className="post-card-inline-chip delete"
-              onClick={handleDeletePost}
+          <div className="post-card-inline-tools">
+            <span
+              className="post-card-inline-chip icon"
+              title={post.visibility || 'PUBLIC'}
             >
-              {t('postDelete', '\uc0ad\uc81c')}
-            </button>
-          )}
-          {canStartDm && (
-            <div className="post-card-inline-tools">
+              {visibilityIcon}
+            </span>
+            {canDelete && (
               <button
                 type="button"
-                className={`post-card-inline-chip ${isFollowingAuthor ? 'active' : ''}`}
-                onClick={handleToggleFollow}
-                disabled={isFollowLoading}
+                className="post-card-inline-chip delete"
+                onClick={handleDeletePost}
               >
-                {isFollowLoading ? t('cardWorking') : isFollowingAuthor ? t('cardFollowing') : t('cardFollow')}
+                {t('postDelete', '\uc0ad\uc81c')}
               </button>
-              <button
-                type="button"
-                className="post-card-inline-chip"
-                onClick={handleStartDm}
-              >
-                {t('cardMessage')}
-              </button>
-            </div>
-          )}
+            )}
+            {canStartDm && (
+              <>
+                <button
+                  type="button"
+                  className={`post-card-inline-chip ${isFollowingAuthor ? 'active' : ''}`}
+                  onClick={handleToggleFollow}
+                  disabled={isFollowLoading}
+                >
+                  {isFollowLoading ? t('cardWorking') : isFollowingAuthor ? t('cardFollowing') : t('cardFollow')}
+                </button>
+                <button
+                  type="button"
+                  className="post-card-inline-chip"
+                  onClick={handleStartDm}
+                >
+                  {t('cardMessage')}
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </div>
 

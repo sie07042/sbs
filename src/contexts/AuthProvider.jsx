@@ -117,6 +117,11 @@ export function AuthProvider({ children }) {
     sessionStorage.setItem(SESSION_TOKEN_KEY, newToken)
   }
 
+  const updateUser = (nextUser) => {
+    setUser(nextUser)
+    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(nextUser))
+  }
+
   const refreshAccessToken = async () => {
     try {
       const response = await axios.post('/api/refresh', {}, {
@@ -158,6 +163,7 @@ export function AuthProvider({ children }) {
     login,
     logout,
     updateToken,
+    updateUser,
     refreshAccessToken,
     isAuthenticated: !!user,
   }

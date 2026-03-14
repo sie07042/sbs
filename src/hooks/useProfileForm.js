@@ -269,7 +269,10 @@ export function useProfileForm(accessToken) {
         withCredentials: true
       });
 
-      return response.data?.success || response.status === 200;
+      return {
+        success: response.data?.success || response.status === 200,
+        user: response.data?.data || requestData
+      };
     } catch (error) {
       console.error('프로필 수정 실패:', error);
       throw error;
