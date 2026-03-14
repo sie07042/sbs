@@ -147,6 +147,12 @@
   gap: 0.75rem;
 }
 
+.home-bookmark-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
 .home-alert-card,
 .home-list-row,
 .home-empty-state {

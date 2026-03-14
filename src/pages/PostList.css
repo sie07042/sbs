@@ -330,6 +330,8 @@
 }
 
 .post-card {
+  position: relative;
+  overflow: visible;
   background: color-mix(in srgb, var(--surface) 90%, transparent);
   border-radius: 28px;
   padding: 1.2rem;
@@ -346,6 +348,7 @@
 .post-card:hover {
   transform: translateY(-2px);
   border-color: color-mix(in srgb, var(--brand) 30%, var(--border));
+  z-index: 30;
 }
 
 .post-card-header {
@@ -491,7 +494,7 @@
   visibility: hidden;
   transform: translateY(8px);
   transition: opacity 0.18s ease, transform 0.18s ease;
-  z-index: 20;
+  z-index: 40;
 }
 
 .post-card-author-hoverable:hover .post-card-profile-popover,

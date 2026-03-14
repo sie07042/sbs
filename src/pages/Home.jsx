@@ -4,9 +4,11 @@ import axios from 'axios'
 
 import Footer from '../components/Footer'
 import GNB from '../components/Gnb'
+import PostCard from '../components/PostCard'
 import { useAuth } from '../hooks/useAuth'
 import { useLanguage } from '../hooks/useLanguage'
 import './Home.css'
+import './PostList.css'
 
 function Home() {
   const { isAuthenticated, accessToken, user } = useAuth()
@@ -86,6 +88,42 @@ function Home() {
   const unreadDmCount = useMemo(
     () => dashboard.rooms.reduce((total, room) => total + (room.unreadCount || 0), 0),
     [dashboard.rooms]
+  )
+
+  const bookmarkedPosts = useMemo(
+    () => dashboard.bookmarks
+      .map((bookmark) => {
+        const post = bookmark.post || {}
+        const postId = post.id || bookmark.postId
+
+        if (!postId) {
+          return null
+        }
+
+        return {
+          ...post,
+          id: postId,
+          postId,
+          content: post.content || bookmark.content || '',
+          author: post.author || bookmark.author || {
+            id: bookmark.authorId || bookmark.userId,
+            name: bookmark.authorName || bookmark.userName || t('homeSavedFallback'),
+            profileImage: bookmark.authorProfileImage || bookmark.userProfileImage || null,
+          },
+          userId: post.author?.id || bookmark.authorId || bookmark.userId,
+          userName: post.author?.name || bookmark.authorName || bookmark.userName,
+          userProfileImage: post.author?.profileImage || bookmark.authorProfileImage || bookmark.userProfileImage,
+          createdAt: post.createdAt || bookmark.bookmarkedAt,
+          thumbnailUrl: post.thumbnailUrl || bookmark.thumbnailUrl,
+          likeCount: post.likeCount || 0,
+          commentCount: post.commentCount || 0,
+          viewCount: post.viewCount || 0,
+          visibility: post.visibility || 'PUBLIC',
+          imageCount: post.imageCount || 0,
+        }
+      })
+      .filter(Boolean),
+    [dashboard.bookmarks, t]
   )
 
   const alertItems = useMemo(() => {
@@ -213,17 +251,20 @@ function Home() {
                 <div className="home-empty-state">
                   <p>{t('homeSavedHint')}</p>
                 </div>
-              ) : dashboard.bookmarks.length === 0 ? (
+              ) : bookmarkedPosts.length === 0 ? (
                 <div className="home-empty-state">
                   <p>{t('homeNoBookmarks')}</p>
                 </div>
               ) : (
-                <div className="home-list">
-                  {dashboard.bookmarks.map((bookmark) => (
-                    <Link key={bookmark.postId || bookmark.id} to={`/posts/${bookmark.postId || bookmark.id}`} className="home-list-row">
-                      <strong>{bookmark.authorName || bookmark.userName || t('homeSavedFallback')}</strong>
-                      <span>{bookmark.content || t('homeOpenPostDetails')}</span>
-                    </Link>
+                <div className="home-bookmark-feed">
+                  {bookmarkedPosts.map((bookmarkPost) => (
+                    <PostCard
+                      key={bookmarkPost.id}
+                      post={bookmarkPost}
+                      isAuthenticated={isAuthenticated}
+                      currentUserId={user?.id}
+                      isBookmarked
+                    />
                   ))}
                 </div>
               )}
