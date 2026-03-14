@@ -1,95 +1,145 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { useState, useEffect, useCallback } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
+import axios from 'axios'
 
-import GNB from '../components/Gnb';
-import Footer from '../components/Footer';
-import { useAuth } from '../hooks/useAuth';
-import { API_CONFIG } from '../config';
-import './PostDetail.css';
+import GNB from '../components/Gnb'
+import Footer from '../components/Footer'
+import { useAuth } from '../hooks/useAuth'
+import { API_CONFIG } from '../config'
+import './PostDetail.css'
 
 function PostDetail() {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const { user, accessToken, isAuthenticated } = useAuth();
+  const { id } = useParams()
+  const navigate = useNavigate()
+  const { user, accessToken, isAuthenticated } = useAuth()
 
-  const [post, setPost] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [isLikeLoading, setIsLikeLoading] = useState(false);
+  const [post, setPost] = useState(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [isLikeLoading, setIsLikeLoading] = useState(false)
+  const [followCounts, setFollowCounts] = useState({ followerCount: 0, followingCount: 0 })
+  const [isFollowing, setIsFollowing] = useState(false)
+  const [isFollowLoading, setIsFollowLoading] = useState(false)
+  const [followModalType, setFollowModalType] = useState(null)
+  const [followUsers, setFollowUsers] = useState([])
+  const [isFollowListLoading, setIsFollowListLoading] = useState(false)
 
   const fetchPost = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
+    setIsLoading(true)
+    setError(null)
 
     try {
-      const url = `${API_CONFIG.baseUrl}${API_CONFIG.endpoints.posts}/${id}`;
-      const headers = {};
+      const url = `${API_CONFIG.baseUrl}${API_CONFIG.endpoints.posts}/${id}`
+      const headers = {}
 
       if (accessToken) {
-        headers.Authorization = `Bearer ${accessToken}`;
+        headers.Authorization = `Bearer ${accessToken}`
       }
 
       const response = await axios.get(url, {
         headers,
         withCredentials: true,
-      });
+      })
 
-      setPost(response.data?.data || response.data);
+      setPost(response.data?.data || response.data)
     } catch (err) {
-      console.error('Post detail fetch failed:', err);
+      console.error('Post detail fetch failed:', err)
 
       if (err.response?.status === 404) {
-        setError('Post not found.');
+        setError('Post not found.')
       } else {
-        setError('Failed to load the post.');
+        setError('Failed to load the post.')
       }
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  }, [id, accessToken]);
+  }, [id, accessToken])
 
   useEffect(() => {
-    fetchPost();
-  }, [fetchPost]);
+    fetchPost()
+  }, [fetchPost])
+
+  const authorId = post?.author?.id || post?.userId
+  const authorName = post?.author?.name || post?.userName || 'Unknown'
+  const authorImage = post?.author?.profileImage || post?.userProfileImage || null
+
+  const isOwner = user && post && (
+    user.id === post.userId ||
+    user.id === post.author?.id ||
+    user.email === post.author?.email
+  )
+
+  const canStartDm = isAuthenticated && authorId && !isOwner
+  const canFollow = isAuthenticated && authorId && !isOwner
+
+  const fetchFollowState = useCallback(async () => {
+    if (!authorId) return
+
+    try {
+      const [countResponse, followCheckResponse] = await Promise.all([
+        axios.get(`/api/users/${authorId}/follow/count`, {
+          withCredentials: true,
+        }),
+        canFollow
+          ? axios.get(`/api/users/${authorId}/follow/check`, {
+              headers: accessToken
+                ? {
+                    Authorization: `Bearer ${accessToken}`,
+                  }
+                : undefined,
+              withCredentials: true,
+            })
+          : Promise.resolve({ data: { data: false } }),
+      ])
+
+      setFollowCounts(countResponse.data?.data || { followerCount: 0, followingCount: 0 })
+      setIsFollowing(!!followCheckResponse.data?.data)
+    } catch (err) {
+      console.error('Failed to fetch follow state:', err)
+    }
+  }, [accessToken, authorId, canFollow])
+
+  useEffect(() => {
+    fetchFollowState()
+  }, [fetchFollowState])
 
   const handleDelete = async () => {
     if (!window.confirm('Delete this post?')) {
-      return;
+      return
     }
 
     try {
-      const url = `${API_CONFIG.baseUrl}${API_CONFIG.endpoints.posts}/${id}`;
+      const url = `${API_CONFIG.baseUrl}${API_CONFIG.endpoints.posts}/${id}`
 
       await axios.delete(url, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
         withCredentials: true,
-      });
+      })
 
-      alert('Post deleted.');
-      navigate('/posts');
+      alert('Post deleted.')
+      navigate('/posts')
     } catch (err) {
-      console.error('Post delete failed:', err);
-      alert('Failed to delete the post.');
+      console.error('Post delete failed:', err)
+      alert('Failed to delete the post.')
     }
-  };
+  }
 
   const handleToggleLike = async () => {
     if (!post || isLikeLoading) {
-      return;
+      return
     }
 
     if (!isAuthenticated || !accessToken) {
-      alert('Login is required to like this post.');
-      return;
+      alert('Login is required to like this post.')
+      return
     }
 
-    setIsLikeLoading(true);
+    setIsLikeLoading(true)
 
     try {
-      const url = `${API_CONFIG.baseUrl}${API_CONFIG.endpoints.posts}/${id}/like`;
+      const url = `${API_CONFIG.baseUrl}${API_CONFIG.endpoints.posts}/${id}/like`
       const response = await axios({
         url,
         method: post.liked ? 'delete' : 'post',
@@ -97,57 +147,133 @@ function PostDetail() {
           Authorization: `Bearer ${accessToken}`,
         },
         withCredentials: true,
-      });
+      })
 
-      const likeData = response.data?.data;
+      const likeData = response.data?.data
 
-      setPost(prev => ({
+      setPost((prev) => ({
         ...prev,
         liked: typeof likeData?.liked === 'boolean' ? likeData.liked : !prev.liked,
         likeCount: typeof likeData?.likeCount === 'number'
           ? likeData.likeCount
           : Math.max(0, (prev.likeCount || 0) + (prev.liked ? -1 : 1)),
-      }));
+      }))
     } catch (err) {
-      console.error('Like toggle failed:', err);
-      alert('Failed to update like.');
+      console.error('Like toggle failed:', err)
+      alert('Failed to update like.')
     } finally {
-      setIsLikeLoading(false);
+      setIsLikeLoading(false)
     }
-  };
+  }
 
-  const formatDate = (dateString) => {
-    if (!dateString) return '';
+  const handleToggleFollow = async () => {
+    if (!canFollow || !authorId) {
+      return
+    }
 
-    const date = new Date(dateString);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
+    if (!accessToken) {
+      alert('Login is required to follow users.')
+      return
+    }
 
-    return `${year}.${month}.${day} ${hours}:${minutes}`;
-  };
+    try {
+      setIsFollowLoading(true)
 
-  const authorName = post?.author?.name || post?.userName || 'Unknown';
-  const authorImage = post?.author?.profileImage || post?.userProfileImage || null;
-  const authorId = post?.author?.id || post?.userId;
+      const response = await axios({
+        url: `/api/users/${authorId}/follow`,
+        method: isFollowing ? 'delete' : 'post',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        withCredentials: true,
+      })
 
-  const isOwner = user && post && (
-    user.id === post.userId ||
-    user.id === post.author?.id ||
-    user.email === post.author?.email
-  );
+      const nextData = response.data?.data
+      setIsFollowing(!!nextData?.following)
+      setFollowCounts({
+        followerCount: nextData?.followerCount ?? followCounts.followerCount,
+        followingCount: nextData?.followingCount ?? followCounts.followingCount,
+      })
+    } catch (err) {
+      console.error('Failed to toggle follow:', err)
+      alert(err.response?.data?.message || 'Failed to update follow.')
+    } finally {
+      setIsFollowLoading(false)
+    }
+  }
 
-  const canStartDm = isAuthenticated && authorId && !isOwner;
+  const fetchFollowUsers = async (type) => {
+    if (!authorId) return
+
+    try {
+      setIsFollowListLoading(true)
+
+      const response = await axios.get(`/api/users/${authorId}/${type}?page=0&size=20`, {
+        headers: accessToken
+          ? {
+              Authorization: `Bearer ${accessToken}`,
+            }
+          : undefined,
+        withCredentials: true,
+      })
+
+      setFollowUsers(response.data?.data?.content || [])
+      setFollowModalType(type)
+    } catch (err) {
+      console.error(`Failed to fetch ${type}:`, err)
+      alert(err.response?.data?.message || 'Failed to load follow list.')
+    } finally {
+      setIsFollowListLoading(false)
+    }
+  }
+
+  const handleFollowUserFromList = async (targetUserId, currentlyFollowing) => {
+    if (!accessToken) {
+      alert('Login is required to follow users.')
+      return
+    }
+
+    try {
+      await axios({
+        url: `/api/users/${targetUserId}/follow`,
+        method: currentlyFollowing ? 'delete' : 'post',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        withCredentials: true,
+      })
+
+      setFollowUsers((prev) => prev.map((followUser) => (
+        followUser.id === targetUserId
+          ? { ...followUser, isFollowing: !currentlyFollowing }
+          : followUser
+      )))
+    } catch (err) {
+      console.error('Failed to update follow user from list:', err)
+      alert(err.response?.data?.message || 'Failed to update follow.')
+    }
+  }
 
   const handleStartDm = () => {
     if (!authorId) {
-      return;
+      return
     }
 
-    navigate(`/dm?userId=${authorId}&name=${encodeURIComponent(authorName)}`);
-  };
+    navigate(`/dm?userId=${authorId}&name=${encodeURIComponent(authorName)}`)
+  }
+
+  const formatDate = (dateString) => {
+    if (!dateString) return ''
+
+    const date = new Date(dateString)
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    const hours = String(date.getHours()).padStart(2, '0')
+    const minutes = String(date.getMinutes()).padStart(2, '0')
+
+    return `${year}.${month}.${day} ${hours}:${minutes}`
+  }
 
   return (
     <>
@@ -179,24 +305,49 @@ function PostDetail() {
                 <div className="post-detail-author-info">
                   <span className="post-detail-author-name">{authorName}</span>
                   <span className="post-detail-date">{formatDate(post.createdAt)}</span>
+                  <div className="post-detail-follow-summary">
+                    <button
+                      type="button"
+                      className="post-detail-follow-stat"
+                      onClick={() => fetchFollowUsers('followers')}
+                    >
+                      Followers {followCounts.followerCount || 0}
+                    </button>
+                    <button
+                      type="button"
+                      className="post-detail-follow-stat"
+                      onClick={() => fetchFollowUsers('followings')}
+                    >
+                      Following {followCounts.followingCount || 0}
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              {(isOwner || canStartDm) && (
-                <div className="post-detail-actions">
-                  {canStartDm && (
-                    <button onClick={handleStartDm} className="message-button" type="button">
-                      Message
-                    </button>
-                  )}
-                  
-                  {isOwner && (
+              <div className="post-detail-actions">
+                {canFollow && (
+                  <button
+                    onClick={handleToggleFollow}
+                    className={`follow-button ${isFollowing ? 'following' : ''}`}
+                    type="button"
+                    disabled={isFollowLoading}
+                  >
+                    {isFollowLoading ? 'Saving...' : isFollowing ? 'Following' : 'Follow'}
+                  </button>
+                )}
+
+                {canStartDm && (
+                  <button onClick={handleStartDm} className="message-button" type="button">
+                    Message
+                  </button>
+                )}
+
+                {isOwner && (
                   <button onClick={handleDelete} className="delete-button" type="button">
                     Delete
                   </button>
-                  )}
-                </div>
-              )}
+                )}
+              </div>
             </div>
 
             <div className="post-detail-content">
@@ -244,9 +395,71 @@ function PostDetail() {
           </div>
         ) : null}
       </div>
+
+      {followModalType && (
+        <div className="follow-modal-overlay" onClick={() => setFollowModalType(null)}>
+          <div className="follow-modal-card" onClick={(event) => event.stopPropagation()}>
+            <div className="follow-modal-header">
+              <h3>{followModalType === 'followers' ? 'Followers' : 'Following'}</h3>
+              <button
+                type="button"
+                className="follow-modal-close"
+                onClick={() => setFollowModalType(null)}
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="follow-modal-body">
+              {isFollowListLoading ? (
+                <div className="follow-modal-empty">Loading...</div>
+              ) : followUsers.length === 0 ? (
+                <div className="follow-modal-empty">No users found.</div>
+              ) : (
+                followUsers.map((followUser) => {
+                  const isCurrentUser = String(followUser.id) === String(user?.id)
+
+                  return (
+                    <div key={followUser.id} className="follow-user-row">
+                      <div className="follow-user-meta">
+                        {followUser.profileImage ? (
+                          <img
+                            src={followUser.profileImage}
+                            alt={followUser.name}
+                            className="follow-user-avatar"
+                          />
+                        ) : (
+                          <div className="follow-user-avatar placeholder">
+                            {followUser.name?.charAt(0) || 'U'}
+                          </div>
+                        )}
+                        <div className="follow-user-copy">
+                          <span className="follow-user-name">{followUser.name}</span>
+                          <span className="follow-user-email">{followUser.email}</span>
+                        </div>
+                      </div>
+
+                      {!isCurrentUser && isAuthenticated && typeof followUser.isFollowing === 'boolean' && (
+                        <button
+                          type="button"
+                          className={`follow-user-button ${followUser.isFollowing ? 'following' : ''}`}
+                          onClick={() => handleFollowUserFromList(followUser.id, !!followUser.isFollowing)}
+                        >
+                          {followUser.isFollowing ? 'Following' : 'Follow'}
+                        </button>
+                      )}
+                    </div>
+                  )
+                })
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       <Footer />
     </>
-  );
+  )
 }
 
-export default PostDetail;
+export default PostDetail

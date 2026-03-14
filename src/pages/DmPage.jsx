@@ -18,6 +18,7 @@ function DmPage() {
   const [isMessagesLoading, setIsMessagesLoading] = useState(false)
   const [isSending, setIsSending] = useState(false)
   const [isStartingRoom, setIsStartingRoom] = useState(false)
+  const [hasLoadedRooms, setHasLoadedRooms] = useState(false)
   const messageEndRef = useRef(null)
   const requestedUserId = searchParams.get('userId')
   const requestedUserName = searchParams.get('name')
@@ -50,6 +51,7 @@ function DmPage() {
       if (response.data.success) {
         const roomList = response.data.data.content || []
         setRooms(roomList)
+        setHasLoadedRooms(true)
 
         if (roomList.length > 0) {
           const preferredRoom =
@@ -316,10 +318,13 @@ function DmPage() {
                   Opening conversation{requestedUserName ? ` with ${requestedUserName}` : ''}...
                 </p>
               )}
+              {!isStartingRoom && isRoomsLoading && rooms.length > 0 && (
+                <p className="dm-room-panel-subtitle">Syncing conversations...</p>
+              )}
             </div>
 
             <div className="dm-room-list">
-              {isRoomsLoading ? (
+              {isRoomsLoading && !hasLoadedRooms ? (
                 <div className="dm-room-list-empty">Loading...</div>
               ) : rooms.length === 0 ? (
                 <div className="dm-room-list-empty">No DM rooms yet.</div>
