@@ -26,6 +26,8 @@ function PostList() {
   const [hashtagError, setHashtagError] = useState('')
   const [followStateByAuthor, setFollowStateByAuthor] = useState({})
   const [followLoadingIds, setFollowLoadingIds] = useState([])
+  const [bookmarkStateByPost, setBookmarkStateByPost] = useState({})
+  const [bookmarkLoadingIds, setBookmarkLoadingIds] = useState([])
   const deferredSearch = useDeferredValue(searchInput)
   const deferredHashtagInput = useDeferredValue(hashtagInput)
 
@@ -198,6 +200,49 @@ function PostList() {
     fetchFollowStateForAuthors()
   }, [accessToken, followStateByAuthor, isAuthenticated, user?.id, visiblePosts])
 
+  useEffect(() => {
+    if (!isAuthenticated || !accessToken || visiblePosts.length === 0) {
+      return
+    }
+
+    const missingPostIds = visiblePosts
+      .map((post) => post.id)
+      .filter((postId) => postId && !(postId in bookmarkStateByPost))
+
+    if (missingPostIds.length === 0) {
+      return
+    }
+
+    const fetchBookmarkStateForPosts = async () => {
+      try {
+        const responses = await Promise.all(
+          missingPostIds.map((postId) =>
+            axios.get(`/api/posts/${postId}/bookmark/check`, {
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+              },
+              withCredentials: true,
+            })
+          )
+        )
+
+        setBookmarkStateByPost((prev) => {
+          const next = { ...prev }
+
+          missingPostIds.forEach((postId, index) => {
+            next[postId] = !!responses[index].data?.data
+          })
+
+          return next
+        })
+      } catch (err) {
+        console.error('Failed to fetch bookmark state for posts:', err)
+      }
+    }
+
+    fetchBookmarkStateForPosts()
+  }, [accessToken, bookmarkStateByPost, isAuthenticated, visiblePosts])
+
   const handleToggleLike = async (postId, currentlyLiked) => {
     if (!isAuthenticated || !accessToken) {
       alert('Login is required to like this post.')
@@ -284,6 +329,44 @@ function PostList() {
       alert(err.response?.data?.message || 'Failed to update follow.')
     } finally {
       setFollowLoadingIds((prev) => prev.filter((id) => id !== authorId))
+    }
+  }
+
+  const handleToggleBookmark = async (postId, currentlyBookmarked) => {
+    if (!isAuthenticated || !accessToken) {
+      alert('Login is required to save posts.')
+      return
+    }
+
+    if (bookmarkLoadingIds.includes(postId)) {
+      return
+    }
+
+    setBookmarkLoadingIds((prev) => [...prev, postId])
+
+    try {
+      const response = await axios({
+        url: `/api/posts/${postId}/bookmark`,
+        method: currentlyBookmarked ? 'delete' : 'post',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        withCredentials: true,
+      })
+
+      const nextBookmarked = typeof response.data?.data?.bookmarked === 'boolean'
+        ? response.data.data.bookmarked
+        : !currentlyBookmarked
+
+      setBookmarkStateByPost((prev) => ({
+        ...prev,
+        [postId]: nextBookmarked,
+      }))
+    } catch (err) {
+      console.error('Failed to update bookmark from post card:', err)
+      alert(err.response?.data?.message || 'Failed to update bookmark.')
+    } finally {
+      setBookmarkLoadingIds((prev) => prev.filter((id) => id !== postId))
     }
   }
 
@@ -474,9 +557,12 @@ function PostList() {
                     isAuthenticated={isAuthenticated}
                     currentUserId={user?.id}
                     isLiking={likeLoadingIds.includes(post.id)}
+                    isBookmarked={!!bookmarkStateByPost[post.id]}
+                    isBookmarkLoading={bookmarkLoadingIds.includes(post.id)}
                     isFollowingAuthor={!!followStateByAuthor[post.author?.id || post.userId]}
                     isFollowLoading={followLoadingIds.includes(post.author?.id || post.userId)}
                     onToggleLike={handleToggleLike}
+                    onToggleBookmark={handleToggleBookmark}
                     onToggleFollow={handleToggleFollow}
                   />
                 ))

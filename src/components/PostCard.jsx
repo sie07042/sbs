@@ -5,7 +5,10 @@ function PostCard({
   isAuthenticated,
   currentUserId,
   isLiking,
+  isBookmarked = false,
+  isBookmarkLoading = false,
   onToggleLike,
+  onToggleBookmark,
   isFollowingAuthor = false,
   isFollowLoading = false,
   onToggleFollow,
@@ -22,10 +25,11 @@ function PostCard({
     const diffHour = Math.floor(diffMin / 60)
     const diffDay = Math.floor(diffHour / 24)
 
-    if (diffMin < 1) return '방금 전'
-    if (diffMin < 60) return `${diffMin}분 전`
-    if (diffHour < 24) return `${diffHour}시간 전`
-    if (diffDay < 7) return `${diffDay}일 전`
+    if (diffMin < 1) return 'Just now'
+    if (diffMin < 60) return `${diffMin}m ago`
+    if (diffHour < 24) return `${diffHour}h ago`
+    if (diffDay < 7) return `${diffDay}d ago`
+
     return date.toLocaleDateString('ko-KR')
   }
 
@@ -44,30 +48,45 @@ function PostCard({
     navigate(`/posts/${post.id}`)
   }
 
-  const handleLikeClick = (event) => {
+  const stopEvent = (event) => {
     event.preventDefault()
     event.stopPropagation()
+  }
+
+  const handleLikeClick = (event) => {
+    stopEvent(event)
 
     if (onToggleLike) {
       onToggleLike(post.id, !!post.liked)
     }
   }
 
-  const handleStartDm = (event) => {
-    event.preventDefault()
-    event.stopPropagation()
+  const handleBookmarkClick = (event) => {
+    stopEvent(event)
 
+    if (onToggleBookmark) {
+      onToggleBookmark(post.id, isBookmarked)
+    }
+  }
+
+  const handleStartDm = (event) => {
+    stopEvent(event)
     navigate(`/dm?userId=${authorId}&name=${encodeURIComponent(authorName)}`)
   }
 
   const handleToggleFollow = (event) => {
-    event.preventDefault()
-    event.stopPropagation()
+    stopEvent(event)
 
     if (onToggleFollow && authorId) {
       onToggleFollow(authorId, isFollowingAuthor)
     }
   }
+
+  const visibilityIcon = post.visibility === 'PRIVATE'
+    ? '🔒'
+    : post.visibility === 'FOLLOWERS_ONLY'
+      ? '👥'
+      : '🔓'
 
   return (
     <article
@@ -96,31 +115,23 @@ function PostCard({
             <span className="post-card-author-handle">@{authorHandle}</span>
           </div>
         </div>
-        <span className="post-card-time">{formatTime(post.createdAt)}</span>
+        <div className="post-card-header-side">
+          <span className="post-card-time">{formatTime(post.createdAt)}</span>
+          <span className="post-card-visibility-badge" title={post.visibility || 'PUBLIC'}>
+            {visibilityIcon}
+          </span>
+        </div>
       </div>
 
       <div className="post-card-content">
         <p>{previewContent}</p>
       </div>
 
-      <div className="post-card-tags">
-        <span className="post-card-chip">
-          {post.visibility === 'FOLLOWERS_ONLY'
-            ? '팔로워 공개'
-            : post.visibility === 'PRIVATE'
-              ? '비공개'
-              : '전체 공개'}
-        </span>
-        {imageCount > 0 && (
-          <span className="post-card-chip">{`사진 ${imageCount}장`}</span>
-        )}
-      </div>
-
       {(post.thumbnailUrl || (post.images && post.images.length > 0)) && (
         <div className="post-card-thumbnail">
           <img
             src={post.thumbnailUrl || post.images[0]?.imageUrl || post.images[0]?.thumbnailUrl}
-            alt="Post image"
+            alt="Post"
           />
           {(post.imageCount > 1 || (post.images && post.images.length > 1)) && (
             <span className="post-card-image-count">
@@ -138,9 +149,17 @@ function PostCard({
             onClick={handleLikeClick}
             disabled={isLiking}
             aria-pressed={!!post.liked}
-            aria-label={isAuthenticated ? '좋아요 토글' : '좋아요는 로그인 후 사용할 수 있습니다'}
+            aria-label={isAuthenticated ? 'Toggle like' : 'Login required to like'}
           >
-            {`좋아요 ${post.likeCount || 0}`}
+            {`Like ${post.likeCount || 0}`}
+          </button>
+          <button
+            type="button"
+            className={`post-card-bookmark-button ${isBookmarked ? 'active' : ''}`}
+            onClick={handleBookmarkClick}
+            disabled={isBookmarkLoading}
+          >
+            {isBookmarkLoading ? 'Saving...' : isBookmarked ? 'Saved' : 'Save'}
           </button>
           {canStartDm && (
             <button
@@ -149,7 +168,7 @@ function PostCard({
               onClick={handleToggleFollow}
               disabled={isFollowLoading}
             >
-              {isFollowLoading ? '처리 중...' : isFollowingAuthor ? '팔로잉' : '팔로우'}
+              {isFollowLoading ? 'Working...' : isFollowingAuthor ? 'Following' : 'Follow'}
             </button>
           )}
           {canStartDm && (
@@ -158,12 +177,12 @@ function PostCard({
               className="post-card-message-button"
               onClick={handleStartDm}
             >
-              메시지
+              Message
             </button>
           )}
         </div>
-        <span className="post-card-stat">{`댓글 ${post.commentCount || 0}`}</span>
-        <span className="post-card-stat">{`조회 ${post.viewCount || 0}`}</span>
+        <span className="post-card-stat">{`Comments ${post.commentCount || 0}`}</span>
+        <span className="post-card-stat">{`Views ${post.viewCount || 0}`}</span>
       </div>
     </article>
   )
