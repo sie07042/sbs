@@ -146,6 +146,51 @@ function PostList() {
     return sortedPosts
   }, [basePosts, normalizedQuery, sortBy])
 
+  useEffect(() => {
+    if (!isAuthenticated || !accessToken) return
+
+    const uniqueAuthorIds = [...new Set(
+      visiblePosts
+        .map((post) => post.author?.id || post.userId)
+        .filter((authorId) => authorId && String(authorId) !== String(user?.id))
+    )]
+
+    const missingAuthorIds = uniqueAuthorIds.filter((authorId) => !(authorId in followStateByAuthor))
+
+    if (missingAuthorIds.length === 0) {
+      return
+    }
+
+    const fetchFollowStateForAuthors = async () => {
+      try {
+        const responses = await Promise.all(
+          missingAuthorIds.map((authorId) =>
+            axios.get(`/api/users/${authorId}/follow/check`, {
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+              },
+              withCredentials: true,
+            })
+          )
+        )
+
+        setFollowStateByAuthor((prev) => {
+          const next = { ...prev }
+
+          missingAuthorIds.forEach((authorId, index) => {
+            next[authorId] = !!responses[index].data?.data
+          })
+
+          return next
+        })
+      } catch (err) {
+        console.error('Failed to fetch follow state for post authors:', err)
+      }
+    }
+
+    fetchFollowStateForAuthors()
+  }, [accessToken, followStateByAuthor, isAuthenticated, user?.id, visiblePosts])
+
   const handleToggleLike = async (postId, currentlyLiked) => {
     if (!isAuthenticated || !accessToken) {
       alert('Login is required to like this post.')
@@ -200,53 +245,6 @@ function PostList() {
     }
   }
 
-  const isPostLoading = isLoading || isHashtagLoading
-
-  useEffect(() => {
-    if (!isAuthenticated || !accessToken) return
-
-    const uniqueAuthorIds = [...new Set(
-      visiblePosts
-        .map((post) => post.author?.id || post.userId)
-        .filter((authorId) => authorId && String(authorId) !== String(user?.id))
-    )]
-
-    const missingAuthorIds = uniqueAuthorIds.filter((authorId) => !(authorId in followStateByAuthor))
-
-    if (missingAuthorIds.length === 0) {
-      return
-    }
-
-    const fetchFollowStateForAuthors = async () => {
-      try {
-        const responses = await Promise.all(
-          missingAuthorIds.map((authorId) =>
-            axios.get(`/api/users/${authorId}/follow/check`, {
-              headers: {
-                Authorization: `Bearer ${accessToken}`,
-              },
-              withCredentials: true,
-            })
-          )
-        )
-
-        setFollowStateByAuthor((prev) => {
-          const next = { ...prev }
-
-          missingAuthorIds.forEach((authorId, index) => {
-            next[authorId] = !!responses[index].data?.data
-          })
-
-          return next
-        })
-      } catch (err) {
-        console.error('Failed to fetch follow state for post authors:', err)
-      }
-    }
-
-    fetchFollowStateForAuthors()
-  }, [accessToken, followStateByAuthor, isAuthenticated, user?.id, visiblePosts])
-
   const handleToggleFollow = async (authorId, currentlyFollowing) => {
     if (!isAuthenticated || !accessToken) {
       alert('Login is required to follow users.')
@@ -282,212 +280,279 @@ function PostList() {
     }
   }
 
+  const isPostLoading = isLoading || isHashtagLoading
+  const topAuthors = visiblePosts.slice(0, 4).map((post) => ({
+    authorId: post.author?.id || post.userId,
+    name: post.author?.name || post.userName || 'Unknown',
+    handle: `@${(post.author?.name || post.userName || 'user').replace(/\s+/g, '').toLowerCase()}`,
+  }))
+
   return (
     <>
       <GNB />
-      <div className="post-list-container">
-        <div className="post-list-hero">
-          <div className="post-list-hero-copy">
-            <span className="post-list-eyebrow">Community Feed</span>
-            <h1>Find people and topics in one feed</h1>
-            <p>
-              Search content, explore hashtags, and switch between latest and popular sorting in
-              one place.
-            </p>
-          </div>
+      <div className="post-feed-page">
+        <div className="post-feed-shell">
+          <aside className="post-feed-sidebar post-feed-sidebar-left">
+            <section className="post-panel post-panel-intro">
+              <span className="post-panel-label">Community Radar</span>
+              <h1>Find the right people, posts, and topics in one timeline.</h1>
+              <p>
+                Search by author or content, jump into trending hashtags, and switch between
+                latest and popular without leaving the feed.
+              </p>
+              {isAuthenticated && (
+                <Link to="/posts/create" className="post-compose-button">
+                  Create Post
+                </Link>
+              )}
+            </section>
 
-          <div className="post-list-hero-actions">
-            <label className="post-search-shell" htmlFor="post-search">
-              <span className="post-search-icon">Search posts</span>
-              <input
-                id="post-search"
-                type="search"
-                value={searchInput}
-                onChange={(event) => setSearchInput(event.target.value)}
-                placeholder="Search author, content, or hashtag"
-                className="post-search-input"
-              />
-            </label>
-
-            <form
-              className="post-search-shell post-search-shell-hashtag"
-              onSubmit={(event) => {
-                event.preventDefault()
-                fetchHashtagPosts(hashtagInput)
-              }}
-            >
-              <span className="post-search-icon">Search hashtags</span>
-              <div className="post-hashtag-form">
-                <input
-                  type="search"
-                  value={hashtagInput}
-                  onChange={(event) => setHashtagInput(event.target.value)}
-                  placeholder="#travel"
-                  className="post-search-input"
-                />
-                <button type="submit" className="post-inline-button">
-                  Find
-                </button>
+            <section className="post-panel post-panel-stats">
+              <div className="post-panel-stat">
+                <strong>{visiblePosts.length}</strong>
+                <span>{selectedHashtag ? `Posts for #${selectedHashtag}` : 'Live posts in feed'}</span>
               </div>
-            </form>
+              <div className="post-panel-stat">
+                <strong>{trendingHashtags.length}</strong>
+                <span>Trending topics tracked</span>
+              </div>
+              <div className="post-panel-stat">
+                <strong>{sortBy === 'popular' ? 'Hot' : 'New'}</strong>
+                <span>Current ranking mode</span>
+              </div>
+            </section>
 
-            {isAuthenticated && (
-              <Link to="/posts/create" className="post-create-button">
-                + Create Post
-              </Link>
-            )}
-          </div>
-        </div>
+            <section className="post-panel post-panel-trending">
+              <div className="post-panel-heading">
+                <h2>Trending</h2>
+                {selectedHashtag && (
+                  <button type="button" className="post-panel-link" onClick={clearHashtagFilter}>
+                    Reset
+                  </button>
+                )}
+              </div>
+              <div className="post-tag-cloud">
+                {trendingHashtags.map((hashtag) => (
+                  <button
+                    key={hashtag.id || hashtag.name}
+                    type="button"
+                    className={`post-tag-chip ${selectedHashtag === hashtag.name ? 'active' : ''}`}
+                    onClick={() => fetchHashtagPosts(hashtag.name)}
+                  >
+                    #{hashtag.name}
+                  </button>
+                ))}
+              </div>
+            </section>
+          </aside>
 
-        <div className="post-discovery-bar">
-          <div className="post-tag-strip">
-            <span className="post-tag-strip-label">Trending</span>
-            {trendingHashtags.map((hashtag) => (
-              <button
-                key={hashtag.id || hashtag.name}
-                type="button"
-                className={`post-tag-chip ${selectedHashtag === hashtag.name ? 'active' : ''}`}
-                onClick={() => fetchHashtagPosts(hashtag.name)}
-              >
-                #{hashtag.name}
-              </button>
-            ))}
-            {selectedHashtag && (
-              <button type="button" className="post-tag-reset" onClick={clearHashtagFilter}>
-                View All
-              </button>
-            )}
-          </div>
+          <main className="post-feed-main">
+            <div className="post-feed-main-header">
+              <div className="post-feed-main-title">
+                <span className="post-feed-main-kicker">Timeline</span>
+                <h2>{activeTab === 'mine' ? 'My posts' : 'All posts'}</h2>
+              </div>
 
-          <div className="post-list-toolbar">
-            <div className="post-list-meta">
-              <span className="post-list-count">{visiblePosts.length}</span>
-              <span className="post-list-count-label">
-                {selectedHashtag ? `posts for #${selectedHashtag}` : 'posts in feed'}
-              </span>
+              <div className="post-feed-controls">
+                <select
+                  value={sortBy}
+                  onChange={(event) => setSortBy(event.target.value)}
+                  className="post-sort-select"
+                >
+                  <option value="latest">Latest</option>
+                  <option value="popular">Popular</option>
+                </select>
+
+                {isAuthenticated && (
+                  <div className="post-tabs">
+                    <button
+                      className={`post-tab ${activeTab === 'all' ? 'active' : ''}`}
+                      onClick={() => {
+                        setActiveTab('all')
+                        if (!selectedHashtag) {
+                          fetchPosts()
+                        }
+                      }}
+                    >
+                      All Posts
+                    </button>
+                    <button
+                      className={`post-tab ${activeTab === 'mine' ? 'active' : ''}`}
+                      onClick={() => {
+                        setActiveTab('mine')
+                        if (selectedHashtag) {
+                          clearHashtagFilter()
+                        }
+                      }}
+                      disabled={!!selectedHashtag}
+                    >
+                      My Posts
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
 
-            <div className="post-list-controls">
-              <select
-                value={sortBy}
-                onChange={(event) => setSortBy(event.target.value)}
-                className="post-sort-select"
-              >
-                <option value="latest">Latest</option>
-                <option value="popular">Popular</option>
-              </select>
-
-              {isAuthenticated && (
-                <div className="post-tabs">
+            {!!hashtagSuggestions.length && (
+              <div className="post-suggestion-panel">
+                {hashtagSuggestions.map((hashtag) => (
                   <button
-                    className={`post-tab ${activeTab === 'all' ? 'active' : ''}`}
+                    key={hashtag.id || hashtag.name}
+                    type="button"
+                    className="post-suggestion-chip"
                     onClick={() => {
-                      setActiveTab('all')
-                      if (!selectedHashtag) {
-                        fetchPosts()
-                      }
+                      setHashtagInput(`#${hashtag.name}`)
+                      fetchHashtagPosts(hashtag.name)
                     }}
                   >
-                    All Posts
+                    #{hashtag.name}
                   </button>
-                  <button
-                    className={`post-tab ${activeTab === 'mine' ? 'active' : ''}`}
-                    onClick={() => {
-                      setActiveTab('mine')
-                      if (selectedHashtag) {
-                        clearHashtagFilter()
-                      }
-                    }}
-                    disabled={!!selectedHashtag}
-                  >
-                    My Posts
+                ))}
+                {isSuggestionLoading && (
+                  <span className="post-suggestion-status">Searching hashtags...</span>
+                )}
+              </div>
+            )}
+
+            {hashtagError && <div className="post-list-error-inline">{hashtagError}</div>}
+
+            <div className="post-list">
+              {isPostLoading ? (
+                <div className="post-list-loading">
+                  <p>{selectedHashtag ? 'Loading hashtag posts...' : 'Loading posts...'}</p>
+                </div>
+              ) : error ? (
+                <div className="post-list-error">
+                  <p>{error}</p>
+                  <button onClick={fetchPosts} className="retry-button" type="button">
+                    Retry
                   </button>
                 </div>
+              ) : visiblePosts.length === 0 ? (
+                <div className="post-list-empty">
+                  <p>
+                    {selectedHashtag
+                      ? `No posts found for #${selectedHashtag}.`
+                      : normalizedQuery
+                        ? 'No search results found.'
+                        : activeTab === 'mine'
+                          ? 'No posts created yet.'
+                          : 'No posts available.'}
+                  </p>
+                  {selectedHashtag ? (
+                    <button type="button" className="post-clear-search" onClick={clearHashtagFilter}>
+                      Clear Hashtag
+                    </button>
+                  ) : normalizedQuery ? (
+                    <button
+                      type="button"
+                      className="post-clear-search"
+                      onClick={() => setSearchInput('')}
+                    >
+                      Clear Search
+                    </button>
+                  ) : (
+                    isAuthenticated && (
+                      <Link to="/posts/create" className="post-create-link">
+                        Create your first post
+                      </Link>
+                    )
+                  )}
+                </div>
+              ) : (
+                visiblePosts.map((post) => (
+                  <PostCard
+                    key={post.id}
+                    post={post}
+                    isAuthenticated={isAuthenticated}
+                    currentUserId={user?.id}
+                    isLiking={likeLoadingIds.includes(post.id)}
+                    isFollowingAuthor={!!followStateByAuthor[post.author?.id || post.userId]}
+                    isFollowLoading={followLoadingIds.includes(post.author?.id || post.userId)}
+                    onToggleLike={handleToggleLike}
+                    onToggleFollow={handleToggleFollow}
+                  />
+                ))
               )}
             </div>
-          </div>
-        </div>
+          </main>
 
-        {!!hashtagSuggestions.length && (
-          <div className="post-suggestion-panel">
-            {hashtagSuggestions.map((hashtag) => (
-              <button
-                key={hashtag.id || hashtag.name}
-                type="button"
-                className="post-suggestion-chip"
-                onClick={() => {
-                  setHashtagInput(`#${hashtag.name}`)
-                  fetchHashtagPosts(hashtag.name)
+          <aside className="post-feed-sidebar post-feed-sidebar-right">
+            <section className="post-panel post-panel-search">
+              <div className="post-panel-heading">
+                <h2>Search</h2>
+              </div>
+              <label className="post-search-shell" htmlFor="post-search">
+                <span className="post-search-label">Search posts</span>
+                <input
+                  id="post-search"
+                  type="search"
+                  value={searchInput}
+                  onChange={(event) => setSearchInput(event.target.value)}
+                  placeholder="Author, content, hashtag"
+                  className="post-search-input"
+                />
+              </label>
+
+              <form
+                className="post-search-shell post-search-shell-hashtag"
+                onSubmit={(event) => {
+                  event.preventDefault()
+                  fetchHashtagPosts(hashtagInput)
                 }}
               >
-                #{hashtag.name}
-              </button>
-            ))}
-            {isSuggestionLoading && <span className="post-suggestion-status">Searching...</span>}
-          </div>
-        )}
+                <span className="post-search-label">Search hashtags</span>
+                <div className="post-hashtag-form">
+                  <input
+                    type="search"
+                    value={hashtagInput}
+                    onChange={(event) => setHashtagInput(event.target.value)}
+                    placeholder="#travel"
+                    className="post-search-input"
+                  />
+                  <button type="submit" className="post-inline-button">
+                    Find
+                  </button>
+                </div>
+              </form>
+            </section>
 
-        {hashtagError && <div className="post-list-error-inline">{hashtagError}</div>}
+            <section className="post-panel post-panel-recommend">
+              <div className="post-panel-heading">
+                <h2>People to watch</h2>
+              </div>
 
-        <div className="post-list">
-          {isPostLoading ? (
-            <div className="post-list-loading">
-              <p>{selectedHashtag ? 'Loading hashtag posts...' : 'Loading posts...'}</p>
-            </div>
-          ) : error ? (
-            <div className="post-list-error">
-              <p>{error}</p>
-              <button onClick={fetchPosts} className="retry-button" type="button">
-                Retry
-              </button>
-            </div>
-          ) : visiblePosts.length === 0 ? (
-            <div className="post-list-empty">
-              <p>
-                {selectedHashtag
-                  ? `No posts found for #${selectedHashtag}.`
-                  : normalizedQuery
-                    ? 'No search results found.'
-                    : activeTab === 'mine'
-                      ? 'No posts created yet.'
-                      : 'No posts available.'}
-              </p>
-              {selectedHashtag ? (
-                <button type="button" className="post-clear-search" onClick={clearHashtagFilter}>
-                  Clear Hashtag
-                </button>
-              ) : normalizedQuery ? (
-                <button
-                  type="button"
-                  className="post-clear-search"
-                  onClick={() => setSearchInput('')}
-                >
-                  Clear Search
-                </button>
+              {topAuthors.length === 0 ? (
+                <p className="post-right-empty">Authors will appear here as the feed loads.</p>
               ) : (
-                isAuthenticated && (
-                  <Link to="/posts/create" className="post-create-link">
-                    Create your first post
-                  </Link>
-                )
+                <div className="post-recommend-list">
+                  {topAuthors.map((author) => {
+                    const isFollowing = !!followStateByAuthor[author.authorId]
+                    const isSaving = followLoadingIds.includes(author.authorId)
+
+                    return (
+                      <div key={author.authorId} className="post-recommend-row">
+                        <div className="post-recommend-copy">
+                          <strong>{author.name}</strong>
+                          <span>{author.handle}</span>
+                        </div>
+                        {author.authorId && String(author.authorId) !== String(user?.id) && isAuthenticated && (
+                          <button
+                            type="button"
+                            className={`post-recommend-button ${isFollowing ? 'following' : ''}`}
+                            onClick={() => handleToggleFollow(author.authorId, isFollowing)}
+                            disabled={isSaving}
+                          >
+                            {isSaving ? 'Saving...' : isFollowing ? 'Following' : 'Follow'}
+                          </button>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
               )}
-            </div>
-          ) : (
-            visiblePosts.map((post) => (
-              // Follow state is cached per author for card-level actions.
-              <PostCard
-                key={post.id}
-                post={post}
-                isAuthenticated={isAuthenticated}
-                currentUserId={user?.id}
-                isLiking={likeLoadingIds.includes(post.id)}
-                isFollowingAuthor={!!followStateByAuthor[post.author?.id || post.userId]}
-                isFollowLoading={followLoadingIds.includes(post.author?.id || post.userId)}
-                onToggleLike={handleToggleLike}
-                onToggleFollow={handleToggleFollow}
-              />
-            ))
-          )}
+            </section>
+          </aside>
         </div>
       </div>
       <Footer />

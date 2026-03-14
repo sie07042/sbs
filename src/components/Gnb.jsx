@@ -1,5 +1,6 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import { useTheme } from '../hooks/useTheme'
 import './Gnb.css'
 import defaultUserImage from '../assets/default_user.png'
 
@@ -7,6 +8,7 @@ function GNB() {
   const navigate = useNavigate()
   const location = useLocation()
   const { user, isAuthenticated, isLoading, logout } = useAuth()
+  const { isDarkMode, toggleTheme } = useTheme()
 
   const handleLogout = async () => {
     if (!window.confirm('Do you want to log out?')) {
@@ -27,7 +29,11 @@ function GNB() {
     <nav className="gnb">
       <div className="gnb-container">
         <div className="gnb-menu-shell">
-          <div className="gnb-menu-side gnb-menu-left">
+          <div className="gnb-brand-mark">
+            <span>S</span>
+          </div>
+
+          <div className="gnb-primary-links">
             <Link to="/" className={`gnb-menu-link ${location.pathname === '/' ? 'active' : ''}`}>
               Home
             </Link>
@@ -35,23 +41,27 @@ function GNB() {
               to="/posts"
               className={`gnb-menu-link ${location.pathname.startsWith('/posts') ? 'active' : ''}`}
             >
-              Posts
+              Feed
             </Link>
+            {isAuthenticated && (
+              <Link
+                to="/dm"
+                className={`gnb-menu-link ${location.pathname.startsWith('/dm') ? 'active' : ''}`}
+              >
+                DM
+              </Link>
+            )}
           </div>
 
-          <span className="gnb-menu-trigger">Menu</span>
+          <div className="gnb-right-actions">
+            <button type="button" className="gnb-theme-toggle" onClick={toggleTheme}>
+              <span className="gnb-theme-toggle-icon">{isDarkMode ? 'Light' : 'Dark'}</span>
+            </button>
 
-          <div className="gnb-menu-side gnb-menu-right">
             {isLoading ? (
               <span className="gnb-loading">Loading...</span>
             ) : isAuthenticated ? (
               <>
-                <Link
-                  to="/dm"
-                  className={`gnb-menu-link ${location.pathname.startsWith('/dm') ? 'active' : ''}`}
-                >
-                  DM
-                </Link>
                 <Link to="/profile" className="gnb-user-chip">
                   <img
                     src={user?.profileImage || defaultUserImage}
