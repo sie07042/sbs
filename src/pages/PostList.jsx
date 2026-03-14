@@ -30,6 +30,7 @@ function PostList() {
   const [bookmarkLoadingIds, setBookmarkLoadingIds] = useState([])
   const deferredSearch = useDeferredValue(searchInput)
   const deferredHashtagInput = useDeferredValue(hashtagInput)
+  const getPostId = (post) => post?.id || post?.postId
 
   const { posts, isLoading, error, fetchPosts, updatePost } = usePosts(accessToken, {
     myPostsOnly: activeTab === 'mine',
@@ -206,7 +207,7 @@ function PostList() {
     }
 
     const missingPostIds = visiblePosts
-      .map((post) => post.id)
+      .map((post) => getPostId(post))
       .filter((postId) => postId && !(postId in bookmarkStateByPost))
 
     if (missingPostIds.length === 0) {
@@ -278,7 +279,7 @@ function PostList() {
 
       if (selectedHashtag) {
         setHashtagPosts((prev) => prev.map((post) => (
-          post.id === postId
+          getPostId(post) === postId
             ? {
                 ...post,
                 liked: typeof likeData?.liked === 'boolean' ? likeData.liked : !currentlyLiked,
@@ -550,22 +551,30 @@ function PostList() {
                   )}
                 </div>
               ) : (
-                visiblePosts.map((post) => (
-                  <PostCard
-                    key={post.id}
-                    post={post}
-                    isAuthenticated={isAuthenticated}
-                    currentUserId={user?.id}
-                    isLiking={likeLoadingIds.includes(post.id)}
-                    isBookmarked={!!bookmarkStateByPost[post.id]}
-                    isBookmarkLoading={bookmarkLoadingIds.includes(post.id)}
-                    isFollowingAuthor={!!followStateByAuthor[post.author?.id || post.userId]}
-                    isFollowLoading={followLoadingIds.includes(post.author?.id || post.userId)}
-                    onToggleLike={handleToggleLike}
-                    onToggleBookmark={handleToggleBookmark}
-                    onToggleFollow={handleToggleFollow}
-                  />
-                ))
+                visiblePosts.map((post) => {
+                  const postId = getPostId(post)
+
+                  if (!postId) {
+                    return null
+                  }
+
+                  return (
+                    <PostCard
+                      key={postId}
+                      post={post}
+                      isAuthenticated={isAuthenticated}
+                      currentUserId={user?.id}
+                      isLiking={likeLoadingIds.includes(postId)}
+                      isBookmarked={!!bookmarkStateByPost[postId]}
+                      isBookmarkLoading={bookmarkLoadingIds.includes(postId)}
+                      isFollowingAuthor={!!followStateByAuthor[post.author?.id || post.userId]}
+                      isFollowLoading={followLoadingIds.includes(post.author?.id || post.userId)}
+                      onToggleLike={handleToggleLike}
+                      onToggleBookmark={handleToggleBookmark}
+                      onToggleFollow={handleToggleFollow}
+                    />
+                  )
+                })
               )}
             </div>
           </main>

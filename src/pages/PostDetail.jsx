@@ -12,6 +12,7 @@ function PostDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { user, accessToken, isAuthenticated } = useAuth()
+  const postId = id && id !== 'undefined' && id !== 'null' ? id : null
 
   const [post, setPost] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -52,12 +53,18 @@ function PostDetail() {
   }
 
   const fetchPost = useCallback(async () => {
+    if (!postId) {
+      setError('Invalid post id.')
+      setIsLoading(false)
+      return
+    }
+
     setIsLoading(true)
     setError(null)
 
     try {
       const response = await axios.get(
-        `${API_CONFIG.baseUrl}${API_CONFIG.endpoints.posts}/${id}`,
+        `${API_CONFIG.baseUrl}${API_CONFIG.endpoints.posts}/${postId}`,
         {
           headers: authHeaders,
           withCredentials: true,
@@ -71,13 +78,19 @@ function PostDetail() {
     } finally {
       setIsLoading(false)
     }
-  }, [authHeaders, id])
+  }, [authHeaders, postId])
 
   const fetchComments = useCallback(async () => {
+    if (!postId) {
+      setComments([])
+      setIsCommentsLoading(false)
+      return
+    }
+
     setIsCommentsLoading(true)
 
     try {
-      const response = await axios.get(`/api/posts/${id}/comments?page=0&size=20`, {
+      const response = await axios.get(`/api/posts/${postId}/comments?page=0&size=20`, {
         headers: authHeaders,
         withCredentials: true,
       })
@@ -89,7 +102,7 @@ function PostDetail() {
     } finally {
       setIsCommentsLoading(false)
     }
-  }, [authHeaders, id])
+  }, [authHeaders, postId])
 
   useEffect(() => {
     fetchPost()
@@ -145,7 +158,7 @@ function PostDetail() {
     }
 
     try {
-      const response = await axios.get(`/api/posts/${id}/bookmark/check`, {
+      const response = await axios.get(`/api/posts/${postId}/bookmark/check`, {
         headers: authHeaders,
         withCredentials: true,
       })
@@ -155,7 +168,7 @@ function PostDetail() {
       console.error('Failed to fetch bookmark state:', err)
       setIsBookmarked(false)
     }
-  }, [accessToken, authHeaders, id, isAuthenticated])
+  }, [accessToken, authHeaders, isAuthenticated, postId])
 
   useEffect(() => {
     fetchFollowState()
@@ -190,7 +203,7 @@ function PostDetail() {
     }
 
     try {
-      await axios.delete(`${API_CONFIG.baseUrl}${API_CONFIG.endpoints.posts}/${id}`, {
+      await axios.delete(`${API_CONFIG.baseUrl}${API_CONFIG.endpoints.posts}/${postId}`, {
         headers: authHeaders,
         withCredentials: true,
       })
@@ -217,7 +230,7 @@ function PostDetail() {
 
     try {
       const response = await axios({
-        url: `${API_CONFIG.baseUrl}${API_CONFIG.endpoints.posts}/${id}/like`,
+        url: `${API_CONFIG.baseUrl}${API_CONFIG.endpoints.posts}/${postId}/like`,
         method: post.liked ? 'delete' : 'post',
         headers: authHeaders,
         withCredentials: true,
@@ -254,7 +267,7 @@ function PostDetail() {
       setIsBookmarkLoading(true)
 
       const response = await axios({
-        url: `/api/posts/${id}/bookmark`,
+        url: `/api/posts/${postId}/bookmark`,
         method: isBookmarked ? 'delete' : 'post',
         headers: authHeaders,
         withCredentials: true,
@@ -379,7 +392,7 @@ function PostDetail() {
       setCommentSubmitting(true)
 
       const response = await axios.post(
-        `/api/posts/${id}/comments`,
+        `/api/posts/${postId}/comments`,
         { content: commentInput.trim() },
         {
           headers: {

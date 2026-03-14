@@ -40,12 +40,17 @@ function PostCard({
   const authorName = post.author?.name || post.userName || 'Unknown'
   const authorImage = post.author?.profileImage || post.userProfileImage || null
   const authorId = post.author?.id || post.userId
+  const postId = post.id || post.postId
   const canStartDm = isAuthenticated && authorId && String(authorId) !== String(currentUserId)
   const imageCount = post.imageCount || post.images?.length || 0
   const authorHandle = authorName.replace(/\s+/g, '').toLowerCase() || 'user'
 
   const handleMoveToDetail = () => {
-    navigate(`/posts/${post.id}`)
+    if (!postId) {
+      return
+    }
+
+    navigate(`/posts/${postId}`)
   }
 
   const stopEvent = (event) => {
@@ -56,16 +61,16 @@ function PostCard({
   const handleLikeClick = (event) => {
     stopEvent(event)
 
-    if (onToggleLike) {
-      onToggleLike(post.id, !!post.liked)
+    if (onToggleLike && postId) {
+      onToggleLike(postId, !!post.liked)
     }
   }
 
   const handleBookmarkClick = (event) => {
     stopEvent(event)
 
-    if (onToggleBookmark) {
-      onToggleBookmark(post.id, isBookmarked)
+    if (onToggleBookmark && postId) {
+      onToggleBookmark(postId, isBookmarked)
     }
   }
 
