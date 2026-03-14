@@ -9,7 +9,7 @@ import './DmPage.css'
 function DmPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { user, isAuthenticated, isLoading } = useAuth()
+  const { user, accessToken, isAuthenticated, isLoading } = useAuth()
   const [rooms, setRooms] = useState([])
   const [selectedRoom, setSelectedRoom] = useState(null)
   const [messages, setMessages] = useState([])
@@ -39,6 +39,11 @@ function DmPage() {
       setIsRoomsLoading(true)
 
       const response = await axios.get('/api/dm/rooms?page=0&size=20', {
+        headers: accessToken
+          ? {
+              Authorization: `Bearer ${accessToken}`,
+            }
+          : undefined,
         withCredentials: true,
       })
 
@@ -67,25 +72,37 @@ function DmPage() {
       }
     } catch (error) {
       console.error('DM rooms fetch error:', error)
-      alert('Failed to load DM rooms.')
+      alert(
+        error.response?.data?.message ||
+          (error.response?.status === 401
+            ? 'Login is required to open DM.'
+            : 'Failed to load DM rooms.')
+      )
     } finally {
       setIsRoomsLoading(false)
     }
 
     return []
-  }, [findRoomByPeerUserId, selectedRoom?.roomId])
+  }, [accessToken, findRoomByPeerUserId, selectedRoom?.roomId])
 
   const markAsRead = useCallback(async (roomId, lastReadMessageId) => {
     try {
       await axios.post(
         `/api/dm/rooms/${roomId}/read`,
         { lastReadMessageId },
-        { withCredentials: true }
+        {
+          headers: accessToken
+            ? {
+                Authorization: `Bearer ${accessToken}`,
+              }
+            : undefined,
+          withCredentials: true,
+        }
       )
     } catch (error) {
       console.error('Mark as read error:', error)
     }
-  }, [])
+  }, [accessToken])
 
   const fetchMessages = useCallback(async (roomId) => {
     if (!roomId) return
@@ -96,6 +113,11 @@ function DmPage() {
       const response = await axios.get(
         `/api/dm/rooms/${roomId}/messages?size=30`,
         {
+          headers: accessToken
+            ? {
+                Authorization: `Bearer ${accessToken}`,
+              }
+            : undefined,
           withCredentials: true,
         }
       )
@@ -116,11 +138,11 @@ function DmPage() {
       }
     } catch (error) {
       console.error('DM messages fetch error:', error)
-      alert('Failed to load messages.')
+      alert(error.response?.data?.message || 'Failed to load messages.')
     } finally {
       setIsMessagesLoading(false)
     }
-  }, [markAsRead])
+  }, [accessToken, markAsRead])
 
   const handleSendMessage = async (e) => {
     e.preventDefault()
@@ -146,7 +168,14 @@ function DmPage() {
       const response = await axios.post(
         `/api/dm/rooms/${selectedRoom.roomId}/messages`,
         { content: messageInput.trim() },
-        { withCredentials: true }
+        {
+          headers: accessToken
+            ? {
+                Authorization: `Bearer ${accessToken}`,
+              }
+            : undefined,
+          withCredentials: true,
+        }
       )
 
       if (response.data.success) {
@@ -158,7 +187,7 @@ function DmPage() {
       }
     } catch (error) {
       console.error('Send message error:', error)
-      alert('Failed to send message.')
+      alert(error.response?.data?.message || 'Failed to send message.')
     } finally {
       setIsSending(false)
     }
@@ -187,8 +216,15 @@ function DmPage() {
 
       const response = await axios.post(
         '/api/dm/rooms',
-        { peerUserId: Number(targetUserId) },
-        { withCredentials: true }
+        { targetUserId: Number(targetUserId) },
+        {
+          headers: accessToken
+            ? {
+                Authorization: `Bearer ${accessToken}`,
+              }
+            : undefined,
+          withCredentials: true,
+        }
       )
 
       if (response.data.success) {
@@ -212,11 +248,11 @@ function DmPage() {
       }
     } catch (error) {
       console.error('Start DM room error:', error)
-      alert('Failed to open conversation.')
+      alert(error.response?.data?.message || 'Failed to open conversation.')
     } finally {
       setIsStartingRoom(false)
     }
-  }, [fetchRooms, findRoomByPeerUserId, isAuthenticated, navigate, rooms, user?.id])
+  }, [accessToken, fetchRooms, findRoomByPeerUserId, isAuthenticated, navigate, rooms, user?.id])
 
   useEffect(() => {
     if (isLoading) return
