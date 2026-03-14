@@ -132,10 +132,10 @@ function PostCard({
   }
 
   const visibilityIcon = post.visibility === 'PRIVATE'
-    ? '🔒︎'
-    : post.visibility === 'FOLLOWERS_ONLY'
-      ? '🔐︎'
-      : '🔓︎'
+    ? '\uD83D\uDD12'
+    : post.visibility === 'FOLLOWERS'
+      ? '\uD83D\uDD12'
+      : '\uD83D\uDD13'
 
   return (
     <article

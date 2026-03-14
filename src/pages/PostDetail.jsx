@@ -567,7 +567,7 @@ function PostDetail() {
 
   const visibilityLabel = post?.visibility === 'PRIVATE'
     ? t('postPrivate')
-    : post?.visibility === 'FOLLOWERS_ONLY'
+    : post?.visibility === 'FOLLOWERS'
       ? t('postFollowersOnly')
       : t('postPublic')
 
