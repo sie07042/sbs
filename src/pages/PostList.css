@@ -359,10 +359,24 @@
 }
 
 .post-card-avatar {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border-radius: 50%;
+  object-fit: cover;
   border: 1px solid var(--border);
 }
 
 .post-card-avatar-placeholder {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
   background: linear-gradient(135deg, var(--brand), var(--success));
 }
 

@@ -294,15 +294,15 @@ function PostList() {
         <div className="post-feed-shell">
           <aside className="post-feed-sidebar post-feed-sidebar-left">
             <section className="post-panel post-panel-intro">
-              <span className="post-panel-label">Community Radar</span>
-              <h1>Find the right people, posts, and topics in one timeline.</h1>
+              <span className="post-panel-label">커뮤니티 레이더</span>
+              <h1>한 타임라인에서 사람, 게시글, 주제를 한 번에 찾아보세요.</h1>
               <p>
-                Search by author or content, jump into trending hashtags, and switch between
-                latest and popular without leaving the feed.
+                작성자나 내용으로 검색하고, 인기 해시태그를 바로 탐색하고, 피드를 떠나지
+                않고 최신순과 인기순을 오갈 수 있어요.
               </p>
               {isAuthenticated && (
                 <Link to="/posts/create" className="post-compose-button">
-                  Create Post
+                  글쓰기
                 </Link>
               )}
             </section>
@@ -310,24 +310,24 @@ function PostList() {
             <section className="post-panel post-panel-stats">
               <div className="post-panel-stat">
                 <strong>{visiblePosts.length}</strong>
-                <span>{selectedHashtag ? `Posts for #${selectedHashtag}` : 'Live posts in feed'}</span>
+                <span>{selectedHashtag ? `#${selectedHashtag} 게시글 수` : '피드에 보이는 게시글'}</span>
               </div>
               <div className="post-panel-stat">
                 <strong>{trendingHashtags.length}</strong>
-                <span>Trending topics tracked</span>
+                <span>지금 뜨는 해시태그</span>
               </div>
               <div className="post-panel-stat">
-                <strong>{sortBy === 'popular' ? 'Hot' : 'New'}</strong>
-                <span>Current ranking mode</span>
+                <strong>{sortBy === 'popular' ? '인기' : '최신'}</strong>
+                <span>현재 정렬 방식</span>
               </div>
             </section>
 
             <section className="post-panel post-panel-trending">
               <div className="post-panel-heading">
-                <h2>Trending</h2>
+                <h2>트렌딩</h2>
                 {selectedHashtag && (
                   <button type="button" className="post-panel-link" onClick={clearHashtagFilter}>
-                    Reset
+                    초기화
                   </button>
                 )}
               </div>
@@ -349,8 +349,8 @@ function PostList() {
           <main className="post-feed-main">
             <div className="post-feed-main-header">
               <div className="post-feed-main-title">
-                <span className="post-feed-main-kicker">Timeline</span>
-                <h2>{activeTab === 'mine' ? 'My posts' : 'All posts'}</h2>
+                <span className="post-feed-main-kicker">타임라인</span>
+                <h2>{activeTab === 'mine' ? '내 게시글' : '전체 게시글'}</h2>
               </div>
 
               <div className="post-feed-controls">
@@ -359,8 +359,8 @@ function PostList() {
                   onChange={(event) => setSortBy(event.target.value)}
                   className="post-sort-select"
                 >
-                  <option value="latest">Latest</option>
-                  <option value="popular">Popular</option>
+                  <option value="latest">최신순</option>
+                  <option value="popular">인기순</option>
                 </select>
 
                 {isAuthenticated && (
@@ -374,7 +374,7 @@ function PostList() {
                         }
                       }}
                     >
-                      All Posts
+                      전체 글
                     </button>
                     <button
                       className={`post-tab ${activeTab === 'mine' ? 'active' : ''}`}
@@ -386,7 +386,7 @@ function PostList() {
                       }}
                       disabled={!!selectedHashtag}
                     >
-                      My Posts
+                      내 글
                     </button>
                   </div>
                 )}
@@ -409,7 +409,7 @@ function PostList() {
                   </button>
                 ))}
                 {isSuggestionLoading && (
-                  <span className="post-suggestion-status">Searching hashtags...</span>
+                  <span className="post-suggestion-status">해시태그를 찾는 중...</span>
                 )}
               </div>
             )}
@@ -419,29 +419,29 @@ function PostList() {
             <div className="post-list">
               {isPostLoading ? (
                 <div className="post-list-loading">
-                  <p>{selectedHashtag ? 'Loading hashtag posts...' : 'Loading posts...'}</p>
+                  <p>{selectedHashtag ? '해시태그 게시글을 불러오는 중...' : '게시글을 불러오는 중...'}</p>
                 </div>
               ) : error ? (
                 <div className="post-list-error">
                   <p>{error}</p>
                   <button onClick={fetchPosts} className="retry-button" type="button">
-                    Retry
+                    다시 시도
                   </button>
                 </div>
               ) : visiblePosts.length === 0 ? (
                 <div className="post-list-empty">
                   <p>
                     {selectedHashtag
-                      ? `No posts found for #${selectedHashtag}.`
+                      ? `#${selectedHashtag} 게시글이 아직 없어요.`
                       : normalizedQuery
-                        ? 'No search results found.'
+                        ? '검색 결과가 없어요.'
                         : activeTab === 'mine'
-                          ? 'No posts created yet.'
-                          : 'No posts available.'}
+                          ? '아직 작성한 게시글이 없어요.'
+                          : '표시할 게시글이 없어요.'}
                   </p>
                   {selectedHashtag ? (
                     <button type="button" className="post-clear-search" onClick={clearHashtagFilter}>
-                      Clear Hashtag
+                      해시태그 해제
                     </button>
                   ) : normalizedQuery ? (
                     <button
@@ -449,12 +449,12 @@ function PostList() {
                       className="post-clear-search"
                       onClick={() => setSearchInput('')}
                     >
-                      Clear Search
+                      검색 지우기
                     </button>
                   ) : (
                     isAuthenticated && (
                       <Link to="/posts/create" className="post-create-link">
-                        Create your first post
+                        첫 게시글 쓰기
                       </Link>
                     )
                   )}
@@ -480,16 +480,16 @@ function PostList() {
           <aside className="post-feed-sidebar post-feed-sidebar-right">
             <section className="post-panel post-panel-search">
               <div className="post-panel-heading">
-                <h2>Search</h2>
+                <h2>검색</h2>
               </div>
               <label className="post-search-shell" htmlFor="post-search">
-                <span className="post-search-label">Search posts</span>
+                <span className="post-search-label">게시글 검색</span>
                 <input
                   id="post-search"
                   type="search"
                   value={searchInput}
                   onChange={(event) => setSearchInput(event.target.value)}
-                  placeholder="Author, content, hashtag"
+                  placeholder="작성자, 내용, 해시태그"
                   className="post-search-input"
                 />
               </label>
@@ -501,7 +501,7 @@ function PostList() {
                   fetchHashtagPosts(hashtagInput)
                 }}
               >
-                <span className="post-search-label">Search hashtags</span>
+                <span className="post-search-label">해시태그 검색</span>
                 <div className="post-hashtag-form">
                   <input
                     type="search"
@@ -511,7 +511,7 @@ function PostList() {
                     className="post-search-input"
                   />
                   <button type="submit" className="post-inline-button">
-                    Find
+                    찾기
                   </button>
                 </div>
               </form>
@@ -519,11 +519,11 @@ function PostList() {
 
             <section className="post-panel post-panel-recommend">
               <div className="post-panel-heading">
-                <h2>People to watch</h2>
+                <h2>눈여겨볼 사람들</h2>
               </div>
 
               {topAuthors.length === 0 ? (
-                <p className="post-right-empty">Authors will appear here as the feed loads.</p>
+                <p className="post-right-empty">피드를 불러오면 작성자가 여기에 보여요.</p>
               ) : (
                 <div className="post-recommend-list">
                   {topAuthors.map((author) => {
@@ -543,7 +543,7 @@ function PostList() {
                             onClick={() => handleToggleFollow(author.authorId, isFollowing)}
                             disabled={isSaving}
                           >
-                            {isSaving ? 'Saving...' : isFollowing ? 'Following' : 'Follow'}
+                            {isSaving ? '처리 중...' : isFollowing ? '팔로잉' : '팔로우'}
                           </button>
                         )}
                       </div>

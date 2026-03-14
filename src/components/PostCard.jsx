@@ -22,10 +22,10 @@ function PostCard({
     const diffHour = Math.floor(diffMin / 60)
     const diffDay = Math.floor(diffHour / 24)
 
-    if (diffMin < 1) return 'Just now'
-    if (diffMin < 60) return `${diffMin}m ago`
-    if (diffHour < 24) return `${diffHour}h ago`
-    if (diffDay < 7) return `${diffDay}d ago`
+    if (diffMin < 1) return '방금 전'
+    if (diffMin < 60) return `${diffMin}분 전`
+    if (diffHour < 24) return `${diffHour}시간 전`
+    if (diffDay < 7) return `${diffDay}일 전`
     return date.toLocaleDateString('ko-KR')
   }
 
@@ -104,9 +104,15 @@ function PostCard({
       </div>
 
       <div className="post-card-tags">
-        <span className="post-card-chip">{post.visibility || 'PUBLIC'}</span>
+        <span className="post-card-chip">
+          {post.visibility === 'FOLLOWERS_ONLY'
+            ? '팔로워 공개'
+            : post.visibility === 'PRIVATE'
+              ? '비공개'
+              : '전체 공개'}
+        </span>
         {imageCount > 0 && (
-          <span className="post-card-chip">{`${imageCount} photo${imageCount > 1 ? 's' : ''}`}</span>
+          <span className="post-card-chip">{`사진 ${imageCount}장`}</span>
         )}
       </div>
 
@@ -132,9 +138,9 @@ function PostCard({
             onClick={handleLikeClick}
             disabled={isLiking}
             aria-pressed={!!post.liked}
-            aria-label={isAuthenticated ? 'Toggle like' : 'Login required to like'}
+            aria-label={isAuthenticated ? '좋아요 토글' : '좋아요는 로그인 후 사용할 수 있습니다'}
           >
-            {`Like ${post.likeCount || 0}`}
+            {`좋아요 ${post.likeCount || 0}`}
           </button>
           {canStartDm && (
             <button
@@ -143,7 +149,7 @@ function PostCard({
               onClick={handleToggleFollow}
               disabled={isFollowLoading}
             >
-              {isFollowLoading ? 'Saving...' : isFollowingAuthor ? 'Following' : 'Follow'}
+              {isFollowLoading ? '처리 중...' : isFollowingAuthor ? '팔로잉' : '팔로우'}
             </button>
           )}
           {canStartDm && (
@@ -152,12 +158,12 @@ function PostCard({
               className="post-card-message-button"
               onClick={handleStartDm}
             >
-              Message
+              메시지
             </button>
           )}
         </div>
-        <span className="post-card-stat">{`Comments ${post.commentCount || 0}`}</span>
-        <span className="post-card-stat">{`Views ${post.viewCount || 0}`}</span>
+        <span className="post-card-stat">{`댓글 ${post.commentCount || 0}`}</span>
+        <span className="post-card-stat">{`조회 ${post.viewCount || 0}`}</span>
       </div>
     </article>
   )

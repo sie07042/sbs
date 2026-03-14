@@ -35,13 +35,13 @@ function GNB() {
 
           <div className="gnb-primary-links">
             <Link to="/" className={`gnb-menu-link ${location.pathname === '/' ? 'active' : ''}`}>
-              Home
+              홈
             </Link>
             <Link
               to="/posts"
               className={`gnb-menu-link ${location.pathname.startsWith('/posts') ? 'active' : ''}`}
             >
-              Feed
+              피드
             </Link>
             {isAuthenticated && (
               <Link
@@ -55,35 +55,35 @@ function GNB() {
 
           <div className="gnb-right-actions">
             <button type="button" className="gnb-theme-toggle" onClick={toggleTheme}>
-              <span className="gnb-theme-toggle-icon">{isDarkMode ? 'Light' : 'Dark'}</span>
+              <span className="gnb-theme-toggle-icon">{isDarkMode ? '라이트' : '다크'}</span>
             </button>
 
             {isLoading ? (
-              <span className="gnb-loading">Loading...</span>
+              <span className="gnb-loading">불러오는 중...</span>
             ) : isAuthenticated ? (
               <>
                 <Link to="/profile" className="gnb-user-chip">
                   <img
                     src={user?.profileImage || defaultUserImage}
-                    alt="Profile"
+                    alt="프로필"
                     className="gnb-user-avatar"
                   />
-                  <span className="gnb-user-name">{user?.name || 'User'}</span>
+                  <span className="gnb-user-name">{user?.name || '사용자'}</span>
                 </Link>
                 <button onClick={handleLogout} className="gnb-menu-button" type="button">
-                  Logout
+                  로그아웃
                 </button>
               </>
             ) : (
               <>
                 <Link to="/login" className={`gnb-menu-link ${location.pathname === '/login' ? 'active' : ''}`}>
-                  Login
+                  로그인
                 </Link>
                 <Link
                   to="/signup"
                   className={`gnb-menu-link gnb-signup-link ${location.pathname === '/signup' ? 'active' : ''}`}
                 >
-                  Sign Up
+                  회원가입
                 </Link>
               </>
             )}

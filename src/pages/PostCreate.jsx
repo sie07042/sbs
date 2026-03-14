@@ -1,30 +1,24 @@
-import { useNavigate } from 'react-router-dom';
+import { useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 
-import GNB from '../components/Gnb';
-import Footer from '../components/Footer';
-import { useAuth } from '../hooks/useAuth';
-import { usePostForm } from '../hooks/usePostForm';
-import { FORM_CONFIG } from '../config';
-import './PostCreate.css';
+import GNB from '../components/Gnb'
+import Footer from '../components/Footer'
+import { useAuth } from '../hooks/useAuth'
+import { usePostForm } from '../hooks/usePostForm'
+import './PostCreate.css'
 
-/**
- * PostCreate 컴포넌트
- *
- * 게시글 작성 페이지입니다.
- * - 게시글 내용 입력 (textarea)
- * - 공개 범위 선택 (PUBLIC, PRIVATE, FOLLOWERS)
- * - 이미지 첨부 (다중 선택 가능)
- * - 이미지 미리보기 및 개별 삭제
- */
+const VISIBILITY_OPTIONS = [
+  { value: 'PUBLIC', label: '전체 공개', hint: '누구나 이 게시글을 볼 수 있어요.' },
+  { value: 'PRIVATE', label: '비공개', hint: '나만 볼 수 있는 개인 메모예요.' },
+  { value: 'FOLLOWERS', label: '팔로워 공개', hint: '나를 팔로우하는 사람에게만 보여요.' },
+]
+
 function PostCreate() {
-  const navigate = useNavigate();
-  const { accessToken, isAuthenticated } = useAuth();
-
-  // 게시글 작성 폼 커스텀 훅
+  const navigate = useNavigate()
+  const { user, accessToken, isAuthenticated } = useAuth()
   const {
     content,
     visibility,
-    selectedImages,
     previewImages,
     errors,
     isLoading,
@@ -33,162 +27,177 @@ function PostCreate() {
     handleImageSelect,
     removeImage,
     submitPost,
-  } = usePostForm(accessToken);
+  } = usePostForm(accessToken)
 
-  /**
-   * 폼 제출 핸들러
-   * 게시글 작성 API 호출 후 성공하면 목록 페이지로 이동합니다.
-   */
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const selectedVisibility = useMemo(
+    () => VISIBILITY_OPTIONS.find((option) => option.value === visibility) || VISIBILITY_OPTIONS[0],
+    [visibility]
+  )
+
+  const handleSubmit = async (event) => {
+    event.preventDefault()
 
     try {
-      const success = await submitPost();
+      const success = await submitPost()
+
       if (success) {
-        alert('게시글이 작성되었습니다!');
-        navigate('/posts');
+        alert('게시글이 작성되었어요.')
+        navigate('/posts')
       }
-    } catch (err) {
-      alert('게시글 작성에 실패했습니다. 다시 시도해주세요.');
+    } catch (error) {
+      console.error('Post create failed:', error)
+      alert('게시글 작성에 실패했어요. 잠시 후 다시 시도해주세요.')
     }
-  };
+  }
 
-  /**
-   * 이미지 파일 선택 핸들러
-   * input[type=file]의 onChange 이벤트에서 호출됩니다.
-   */
-  const handleFileChange = (e) => {
-    if (e.target.files && e.target.files.length > 0) {
-      handleImageSelect(e.target.files);
-      // 같은 파일을 다시 선택할 수 있도록 input 값 초기화
-      e.target.value = '';
+  const handleFileChange = (event) => {
+    if (event.target.files && event.target.files.length > 0) {
+      handleImageSelect(event.target.files)
+      event.target.value = ''
     }
-  };
+  }
 
-  // 로그인하지 않은 사용자는 접근 불가
   if (!isAuthenticated) {
     return (
       <>
         <GNB />
-        <div className="post-create-container">
-          <div className="post-create-card">
+        <div className="post-create-page">
+          <div className="post-create-modal post-create-modal-locked">
+            <h1>게시글 작성</h1>
             <p className="post-create-auth-message">
-              게시글을 작성하려면 로그인이 필요합니다.
+              게시글을 작성하려면 먼저 로그인해 주세요.
             </p>
           </div>
         </div>
         <Footer />
       </>
-    );
+    )
   }
 
   return (
     <>
       <GNB />
-      <div className="post-create-container">
-        <div className="post-create-card">
-          <h1>새 게시글 작성</h1>
+      <div className="post-create-page">
+        <div className="post-create-backdrop" />
+        <div className="post-create-modal">
+          <div className="post-create-topbar">
+            <button type="button" className="post-create-close" onClick={() => navigate('/posts')}>
+              닫기
+            </button>
+            <span className="post-create-draft">초안</span>
+          </div>
 
-          <form onSubmit={handleSubmit}>
-            {/* 게시글 내용 입력 */}
-            <div className="form-group">
-              <label htmlFor="content">내용</label>
-              <textarea
-                id="content"
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder="무슨 이야기를 나누고 싶으신가요?"
-                rows={6}
-                maxLength={5000}
-                className={errors.content ? 'error' : ''}
-              />
-              {/* 글자 수 표시 */}
-              <div className="char-count">
-                <span className={content.length > 4500 ? 'warning' : ''}>
-                  {content.length}
-                </span>
-                / 5000
+          <form onSubmit={handleSubmit} className="post-create-form">
+            <div className="post-create-main">
+              <div className="post-create-author">
+                <div className="post-create-avatar">
+                  {user?.profileImage ? (
+                    <img src={user.profileImage} alt={user?.name || '사용자'} />
+                  ) : (
+                    <span>{(user?.name || 'U').charAt(0)}</span>
+                  )}
+                </div>
               </div>
-              {/* 유효성 에러 메시지 */}
-              {errors.content && (
-                <p className="error-message">{errors.content}</p>
-              )}
-            </div>
 
-            {/* 공개 범위 선택 */}
-            <div className="form-group">
-              <label htmlFor="visibility">공개 범위</label>
-              <select
-                id="visibility"
-                value={visibility}
-                onChange={(e) => setVisibility(e.target.value)}
-              >
-                {FORM_CONFIG.visibilityOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+              <div className="post-create-body">
+                <div className="post-create-header">
+                  <strong>{user?.name || '사용자'}</strong>
+                  <span>{selectedVisibility.label}</span>
+                </div>
 
-            {/* 이미지 첨부 */}
-            <div className="form-group">
-              <label>이미지 첨부</label>
-              <label className="image-upload-button" htmlFor="image-input">
-                📷 사진 추가
-              </label>
-              <input
-                id="image-input"
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={handleFileChange}
-                style={{ display: 'none' }}
-              />
-            </div>
+                <textarea
+                  id="content"
+                  value={content}
+                  onChange={(event) => setContent(event.target.value)}
+                  placeholder="무슨 일이 일어나고 있나요?"
+                  rows={6}
+                  maxLength={5000}
+                  className={errors.content ? 'error' : ''}
+                />
 
-            {/* 이미지 미리보기 목록 */}
-            {previewImages.length > 0 && (
-              <div className="image-preview-list">
-                {previewImages.map((src, index) => (
-                  <div key={index} className="image-preview-item">
-                    <img src={src} alt={`미리보기 ${index + 1}`} />
-                    {/* 이미지 제거 버튼 */}
-                    <button
-                      type="button"
-                      className="image-remove-button"
-                      onClick={() => removeImage(index)}
-                    >
-                      ✕
-                    </button>
+                <div className="post-create-meta">
+                  <span className="post-create-hint">{selectedVisibility.hint}</span>
+                  <span className={`post-create-count ${content.length > 4500 ? 'warning' : ''}`}>
+                    {content.length} / 5000
+                  </span>
+                </div>
+
+                {errors.content && (
+                  <p className="post-create-error">{errors.content}</p>
+                )}
+
+                {previewImages.length > 0 && (
+                  <div className="post-create-preview-grid">
+                    {previewImages.map((src, index) => (
+                      <div key={index} className="post-create-preview-item">
+                        <img src={src} alt={`미리보기 ${index + 1}`} />
+                        <button
+                          type="button"
+                          className="post-create-remove-image"
+                          onClick={() => removeImage(index)}
+                        >
+                          삭제
+                        </button>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
               </div>
-            )}
+            </div>
 
-            {/* 하단 버튼 영역 */}
-            <div className="post-create-actions">
-              <button
-                type="button"
-                className="cancel-button"
-                onClick={() => navigate('/posts')}
-              >
-                취소
-              </button>
-              <button
-                type="submit"
-                className="submit-button"
-                disabled={isLoading}
-              >
-                {isLoading ? '작성 중...' : '게시하기'}
-              </button>
+            <div className="post-create-toolbar">
+              <div className="post-create-tools">
+                <label className="post-create-tool-button" htmlFor="image-input">
+                  사진 추가
+                </label>
+                <input
+                  id="image-input"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleFileChange}
+                  hidden
+                />
+
+                <div className="post-create-visibility">
+                  <label htmlFor="visibility">공개 범위</label>
+                  <select
+                    id="visibility"
+                    value={visibility}
+                    onChange={(event) => setVisibility(event.target.value)}
+                  >
+                    {VISIBILITY_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="post-create-actions">
+                <button
+                  type="button"
+                  className="post-create-secondary"
+                  onClick={() => navigate('/posts')}
+                >
+                  취소
+                </button>
+                <button
+                  type="submit"
+                  className="post-create-submit"
+                  disabled={isLoading || !content.trim()}
+                >
+                  {isLoading ? '게시 중...' : '게시하기'}
+                </button>
+              </div>
             </div>
           </form>
         </div>
       </div>
       <Footer />
     </>
-  );
+  )
 }
 
-export default PostCreate;
+export default PostCreate

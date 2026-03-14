@@ -90,9 +90,9 @@
 .gnb-user-chip {
   display: inline-flex;
   align-items: center;
-  gap: 0.55rem;
-  min-height: 44px;
-  padding: 0.3rem 0.8rem 0.3rem 0.35rem;
+  gap: 0.45rem;
+  min-height: 40px;
+  padding: 0.24rem 0.7rem 0.24rem 0.28rem;
   border-radius: 999px;
   color: var(--text);
   background: var(--pill);
@@ -100,8 +100,8 @@
 }
 
 .gnb-user-avatar {
-  width: 34px;
-  height: 34px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   object-fit: cover;
   border: 1px solid var(--border);
@@ -111,7 +111,7 @@
 .gnb-loading,
 .gnb-theme-toggle-icon {
   white-space: nowrap;
-  font-size: 0.88rem;
+  font-size: 0.84rem;
   font-weight: 700;
 }
 
@@ -155,5 +155,10 @@
     min-height: 38px;
     padding: 0.55rem 0.8rem;
     font-size: 0.84rem;
+  }
+
+  .gnb-user-chip {
+    min-height: 36px;
+    padding-right: 0.55rem;
   }
 }
