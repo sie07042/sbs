@@ -15,7 +15,7 @@
   display: flex;
 }
 
-.dm-room-panel { 
+.dm-room-panel {
   width: 320px;
   border-right: 1px solid #e5e7eb;
   display: flex;
@@ -125,7 +125,7 @@
 }
 
 .dm-message-row.mine .dm-message-bubble {
-  background: #316ff3;
+  background: #2563eb;
   color: white;
   border: none;
 }
@@ -165,5 +165,5 @@
 
 .dm-send-button:disabled {
   opacity: 0.6;
-  cursor: not-allowed; 
+  cursor: not-allowed;
 }
